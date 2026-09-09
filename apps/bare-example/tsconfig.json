@@ -1,0 +1,11 @@
+{
+	"extends": "@react-native/typescript-config",
+	"compilerOptions": {
+		"types": ["jest"],
+		"paths": {
+			"react-native-nitrowind": ["../../packages/react-native-nitrowind/src/index.ts"]
+		}
+	},
+	"include": ["**/*.ts", "**/*.tsx"],
+	"exclude": ["**/node_modules", "**/Pods"]
+}

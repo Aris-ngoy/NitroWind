@@ -1,0 +1,21 @@
+{
+	"name": "nitrowind-monorepo",
+	"private": true,
+	"workspaces": ["packages/*", "apps/*"],
+	"scripts": {
+		"build": "turbo run build",
+		"dev": "turbo run dev",
+		"lint": "biome check .",
+		"lint:fix": "biome check --write .",
+		"format": "biome format --write .",
+		"format:check": "biome format .",
+		"check": "biome check . && turbo run typecheck",
+		"typecheck": "turbo run typecheck"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^1.9.4",
+		"turbo": "^2.4.4",
+		"typescript": "^5.8.2"
+	},
+	"packageManager": "bun@1.2.23"
+}

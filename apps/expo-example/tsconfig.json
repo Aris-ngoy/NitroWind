@@ -1,0 +1,10 @@
+{
+	"extends": "expo/tsconfig.base",
+	"compilerOptions": {
+		"strict": true,
+		"moduleResolution": "bundler",
+		"paths": {
+			"react-native-nitrowind": ["../../packages/react-native-nitrowind/src/index.ts"]
+		}
+	}
+}
