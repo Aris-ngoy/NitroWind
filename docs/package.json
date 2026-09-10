@@ -1,0 +1,15 @@
+{
+	"name": "nitro-wind-docs",
+	"private": true,
+	"version": "0.1.0",
+	"type": "module",
+	"scripts": {
+		"dev": "vitepress dev",
+		"build": "vitepress build",
+		"preview": "vitepress preview",
+		"typecheck": "echo 'docs: no tsconfig'"
+	},
+	"devDependencies": {
+		"vitepress": "^1.6.3"
+	}
+}

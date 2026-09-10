@@ -1,7 +1,7 @@
 {
 	"name": "nitrowind-monorepo",
 	"private": true,
-	"workspaces": ["packages/*", "apps/*"],
+	"workspaces": ["packages/*", "apps/*", "benchmarks", "docs"],
 	"scripts": {
 		"build": "turbo run build",
 		"dev": "turbo run dev",
@@ -10,7 +10,10 @@
 		"format": "biome format --write .",
 		"format:check": "biome format .",
 		"check": "biome check . && turbo run typecheck",
-		"typecheck": "turbo run typecheck"
+		"typecheck": "turbo run typecheck",
+		"test": "bun test packages/nitro-wind-core packages/nitro-wind",
+		"bench": "bun run --filter nitro-wind-benchmarks bench",
+		"codegen": "bun run --filter nitro-wind codegen"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^1.9.4",

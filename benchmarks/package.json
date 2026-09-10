@@ -1,0 +1,16 @@
+{
+	"name": "nitro-wind-benchmarks",
+	"private": true,
+	"version": "0.1.0",
+	"type": "module",
+	"scripts": {
+		"bench": "bun ./src/bench.ts",
+		"typecheck": "tsc --noEmit"
+	},
+	"dependencies": {
+		"nitro-wind-core": "workspace:*"
+	},
+	"devDependencies": {
+		"typescript": "^5.8.2"
+	}
+}

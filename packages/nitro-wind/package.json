@@ -1,20 +1,36 @@
 {
-	"name": "react-native-nitrowind",
+	"name": "nitro-wind",
 	"version": "0.1.0",
-	"description": "react-native-nitrowind is a react native package built with Nitro",
-	"main": "./lib/commonjs/index.js",
-	"module": "./lib/module/index.js",
-	"types": "./lib/typescript/src/index.d.ts",
-	"react-native": "src/index",
-	"source": "src/index",
+	"description": "High-performance Tailwind CSS engine for React Native, powered by Nitro Modules",
+	"main": "./src/index.ts",
+	"module": "./src/index.ts",
+	"types": "./src/index.ts",
+	"react-native": "./src/index.ts",
+	"source": "./src/index.ts",
+	"exports": {
+		".": "./src/index.ts",
+		"./babel": "./babel.js",
+		"./showcase": "./src/showcase.tsx"
+	},
+	"license": "MIT",
+	"author": "Aristote Ngoy",
+	"homepage": "https://github.com/Aris-ngoy/NitroWind#readme",
+	"bugs": "https://github.com/Aris-ngoy/NitroWind/issues",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/Aris-ngoy/NitroWind.git",
+		"directory": "packages/nitro-wind"
+	},
+	"keywords": ["react-native", "tailwind", "nitro", "nitro-wind", "stylesheet", "nativewind"],
 	"scripts": {
 		"typecheck": "tsc --noEmit",
 		"clean": "git clean -dfX",
 		"release": "semantic-release",
 		"build": "bun run typecheck && bob build",
-		"codegen": "nitrogen --logLevel=\"debug\" && bun run build && node post-script.js"
+		"codegen": "nitrogen --logLevel=\"debug\" && bun run build && node post-script.js",
+		"test": "bun test",
+		"test:cpp": "clang++ -std=c++20 -I cpp cpp/tests/test_engine.cpp cpp/engine/Tokenizer.cpp cpp/engine/Parser.cpp cpp/engine/Theme.cpp cpp/engine/StyleCache.cpp cpp/engine/Engine.cpp -o /tmp/nitro_wind_engine_tests && /tmp/nitro_wind_engine_tests"
 	},
-	"keywords": ["react-native", "react-native-nitrowind"],
 	"files": [
 		"src",
 		"react-native.config.js",
@@ -33,37 +49,37 @@
 		"ios/**/*.cpp",
 		"ios/**/*.swift",
 		"app.plugin.js",
+		"babel.js",
 		"*.podspec",
 		"README.md"
 	],
-	"repository": "https://github.com/aristotengoy/react-native-nitrowind.git",
-	"author": "Aristote Ngoy",
-	"license": "MIT",
-	"bugs": "https://github.com/aristotengoy/react-native-nitrowind/issues",
-	"homepage": "https://github.com/aristotengoy/react-native-nitrowind#readme",
 	"publishConfig": {
 		"access": "public",
 		"registry": "https://registry.npmjs.org/"
 	},
+	"dependencies": {
+		"nitro-wind-core": "workspace:*"
+	},
 	"devDependencies": {
-		"@jamesacarr/eslint-formatter-github-actions": "^0.2.0",
-		"@semantic-release/changelog": "^6.0.3",
-		"@semantic-release/git": "^10.0.1",
-		"@types/jest": "^29.5.12",
 		"@types/react": "19.2.0",
 		"nitrogen": "^0.36.1",
 		"react": "19.2.3",
 		"react-native": "0.86.0",
 		"react-native-builder-bob": "^0.40.18",
 		"react-native-nitro-modules": "^0.36.1",
-		"conventional-changelog-conventionalcommits": "^10.2.1",
 		"semantic-release": "^25.0.7",
-		"typescript": "^6.0.3"
+		"typescript": "^5.8.2"
 	},
 	"peerDependencies": {
 		"react": "*",
 		"react-native": "*",
-		"react-native-nitro-modules": "*"
+		"react-native-nitro-modules": "*",
+		"react-native-reanimated": "*"
+	},
+	"peerDependenciesMeta": {
+		"react-native-reanimated": {
+			"optional": true
+		}
 	},
 	"react-native-builder-bob": {
 		"source": "src",

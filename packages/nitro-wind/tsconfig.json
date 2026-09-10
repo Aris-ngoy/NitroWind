@@ -5,7 +5,7 @@
 		"allowUnusedLabels": false,
 		"esModuleInterop": true,
 		"forceConsistentCasingInFileNames": true,
-		"jsx": "react",
+		"jsx": "react-jsx",
 		"lib": ["esnext"],
 		"module": "esnext",
 		"moduleResolution": "bundler",
@@ -31,7 +31,8 @@
 		"**/jest.config.js",
 		"**/babel.config.js",
 		"**/metro.config.js",
-		"**/tsconfig.json"
+		"**/tsconfig.json",
+		"**/__tests__/**"
 	],
 	"include": ["src/**/*", "nitrogen/**/*.json"]
 }

@@ -1,0 +1,42 @@
+name: Build Android
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "packages/nitro-wind/**"
+      - "apps/bare-example/android/**"
+      - ".github/workflows/android-build.yml"
+  pull_request:
+    paths:
+      - "packages/nitro-wind/**"
+      - "apps/bare-example/android/**"
+      - ".github/workflows/android-build.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build bare Android example
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install
+      - name: Generate Nitro bindings
+        working-directory: packages/nitro-wind
+        run: bunx nitrogen --logLevel="debug"
+      - uses: actions/setup-java@v5
+        with:
+          distribution: zulu
+          java-version: "17"
+          cache: gradle
+      - name: Assemble debug
+        working-directory: apps/bare-example/android
+        run: ./gradlew assembleDebug --no-daemon --build-cache
+      - name: Stop Gradle
+        working-directory: apps/bare-example/android
+        run: ./gradlew --stop

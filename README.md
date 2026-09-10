@@ -1,69 +1,71 @@
-# NitroWind Monorepo
+# NitroWind
 
-Turborepo monorepo for **NitroWind**, powered by [Nitro Modules](https://nitro.margelo.com/), formatted and linted with [Biome](https://biomejs.dev/).
+**High-performance Tailwind CSS engine for React Native, powered by Nitro Modules**
 
-## Structure
+`nitro-wind` brings the familiar Tailwind utility-class API to React Native with a native C++ core. It delivers near-zero JavaScript style resolution, a JS fallback for Expo Go, and excellent performance while keeping Tailwind's developer experience.
+
+**Fully free and open source** under the MIT license.
+
+## Packages
 
 ```
-├── apps/
-│   ├── bare-example/     # Bare React Native 0.86 example app
-│   └── expo-example/     # Expo SDK 57 (React Native 0.86) example app
-├── packages/
-│   └── react-native-nitrowind/ # Nitro Module core library
-├── biome.json            # Biome linter & formatter configuration
-├── turbo.json            # Turborepo task pipeline configuration
-└── package.json          # Monorepo workspaces & scripts
+packages/
+  nitro-wind/          Main React Native library (C++ Nitro HybridObject + JS API)
+  nitro-wind-core/     Shared tokenizer, parser, theme tokens, JS engine
+  nitro-wind-cli/      Theme generation and className validation
+apps/
+  expo-example/        Expo SDK 57 (JS fallback)
+  bare-example/        React Native 0.86 (native C++ engine)
+  compare-example/     StyleSheet vs nitro-wind vs NativeWind vs Uniwind
+benchmarks/            JS engine throughput suite
+docs/                  VitePress documentation
 ```
 
-## Prerequisites
-
-- [Bun](https://bun.sh/) (recommended package manager) or [Node.js](https://nodejs.org/) >= 22
-- CocoaPods & Xcode (for iOS)
-- Android Studio & NDK (for Android)
-
-## Getting Started
-
-Install dependencies across the monorepo:
+## Getting started
 
 ```bash
 bun install
+bun run check
+bun test packages/nitro-wind-core packages/nitro-wind
+bun run bench
 ```
 
-### Scripts
-
-- `bun run lint` - Run Biome lint checks
-- `bun run lint:fix` - Automatically fix lint and format issues
-- `bun run format` - Format all files with Biome
-- `bun run typecheck` - Run TypeScript checks across all workspaces via Turborepo
-- `bun run build` - Build packages across workspaces via Turborepo
-
-### Codegen for Nitro Module
-
-To run Nitrogen codegen for `react-native-nitrowind`:
+### Native codegen
 
 ```bash
-cd packages/react-native-nitrowind
-bun run codegen
+cd packages/nitro-wind
+bunx nitrogen
 ```
 
-### Running Example Apps
-
-#### Bare React Native Example (`apps/bare-example`)
+### Example apps
 
 ```bash
-# iOS Pod install
-cd apps/bare-example/ios
-pod install
-cd ..
-
-# Run iOS / Android
-bun run ios
-bun run android
+cd apps/bare-example && bun run ios
+cd apps/expo-example && bun run start
+cd apps/compare-example && bun run start
 ```
 
-#### Expo Example (`apps/expo-example`)
+## Public API
 
-```bash
-cd apps/expo-example
-bun run start
+```tsx
+import { View, Text } from "react-native";
+import { styled, useStyle, NitroWindProvider } from "nitro-wind";
+
+const StyledView = styled(View);
+
+function Example() {
+  const { style } = useStyle("p-4 bg-red-500 dark:bg-blue-600 ios:p-6");
+
+  return (
+    <NitroWindProvider theme="dark">
+      <StyledView className="flex-1 items-center justify-center">
+        <Text className="text-white text-xl font-bold">Hello nitro-wind</Text>
+      </StyledView>
+    </NitroWindProvider>
+  );
+}
 ```
+
+## License
+
+MIT — free for everyone, forever.

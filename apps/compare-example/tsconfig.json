@@ -1,0 +1,12 @@
+{
+	"extends": "expo/tsconfig.base",
+	"compilerOptions": {
+		"strict": true,
+		"moduleResolution": "bundler",
+		"paths": {
+			"nitro-wind": ["../../packages/nitro-wind/src/index.ts"],
+			"nitro-wind-core": ["../../packages/nitro-wind-core/src/index.ts"]
+		}
+	},
+	"include": ["**/*.ts", "**/*.tsx", "nativewind-env.d.ts"]
+}

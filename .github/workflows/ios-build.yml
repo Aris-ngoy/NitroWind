@@ -1,0 +1,54 @@
+name: Build iOS
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "packages/nitro-wind/**"
+      - "apps/bare-example/ios/**"
+      - ".github/workflows/ios-build.yml"
+  pull_request:
+    paths:
+      - "packages/nitro-wind/**"
+      - "apps/bare-example/ios/**"
+      - ".github/workflows/ios-build.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build bare iOS example
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: "16.4"
+      - run: bun install
+      - name: Generate Nitro bindings
+        working-directory: packages/nitro-wind
+        run: bunx nitrogen --logLevel="debug"
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.2"
+          bundler-cache: true
+          working-directory: apps/bare-example
+      - name: Install Pods
+        working-directory: apps/bare-example/ios
+        run: pod install
+      - name: Build
+        working-directory: apps/bare-example/ios
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -workspace BareExample.xcworkspace \
+            -scheme BareExample \
+            -sdk iphonesimulator \
+            -configuration Debug \
+            -destination 'platform=iOS Simulator,name=iPhone 16' \
+            CODE_SIGNING_ALLOWED=NO \
+            build
