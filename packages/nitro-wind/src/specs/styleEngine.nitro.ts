@@ -1,4 +1,4 @@
-import type { HybridObject } from "react-native-nitro-modules";
+import type { AnyMap, HybridObject } from "react-native-nitro-modules";
 
 export interface StyleContext {
 	colorScheme: string;
@@ -15,9 +15,21 @@ export interface StyleContext {
 	groupHover: boolean;
 }
 
+export interface AnimationMeta {
+	name?: string;
+	durationMs: number;
+	easing: string;
+	transition: boolean;
+}
+
+export interface StyleResult {
+	style: AnyMap;
+	animation: AnimationMeta;
+}
+
 export interface StyleEngine extends HybridObject<{ ios: "c++"; android: "c++" }> {
-	compute(className: string, context: StyleContext): Record<string, string | number>;
-	computeBatch(classNames: string[], context: StyleContext): Record<string, string | number>[];
+	compute(className: string, context: StyleContext): StyleResult;
+	computeBatch(classNames: string[], context: StyleContext): StyleResult[];
 	setThemeName(name: string): void;
 	clearCache(): void;
 	getCacheSize(): number;

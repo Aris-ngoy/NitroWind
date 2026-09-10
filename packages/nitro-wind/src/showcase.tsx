@@ -106,7 +106,7 @@ function SampleList() {
 
 export function NitroWindShowcase({ badge, subtitle }: NitroWindShowcaseProps) {
 	return (
-		<Screen className="flex-1 bg-slate-950">
+		<Screen className="flex-1 bg-slate-950 pt-10">
 			<ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 48 }}>
 				<Card className="rounded-3xl p-6 bg-slate-900 border border-slate-800">
 					<Body className="text-sky-400 font-bold">{badge}</Body>

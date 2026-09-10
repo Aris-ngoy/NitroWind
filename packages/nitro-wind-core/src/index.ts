@@ -1,11 +1,17 @@
 export {
 	JsStyleEngine,
 	jsStyleEngine,
-	type ComputeResult,
+	type StyleResult,
 } from "./engine";
-export { StyleCache, cacheKey } from "./cache";
-export { inflateStyle, mergeStyles } from "./inflate";
+export { StyleCache, cacheKey, fastCacheKey, fnv1a64 } from "./cache";
+export { mergeStyles } from "./inflate";
 export { parseAnimation, parseClassName, resolveUtility, variantMatches } from "./parser";
+export {
+	classNameContextNeeds,
+	classNameIsAotCompilable,
+	classNameIsContextFree,
+	type ClassNameContextNeeds,
+} from "./contextNeeds";
 export { parseClassToken, tokenize } from "./tokenizer";
 export {
 	BREAKPOINTS,

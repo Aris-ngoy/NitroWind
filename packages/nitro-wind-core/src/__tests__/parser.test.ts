@@ -84,4 +84,10 @@ describe("parseAnimation", () => {
 		expect(meta.easing).toBe("ease-in-out");
 		expect(meta.transition).toBe(true);
 	});
+
+	test("skips tokenizing classNames without animation utilities", () => {
+		const meta = parseAnimation("flex-1 items-center px-4 py-3 bg-slate-900");
+		expect(meta.name).toBeNull();
+		expect(meta.transition).toBe(false);
+	});
 });

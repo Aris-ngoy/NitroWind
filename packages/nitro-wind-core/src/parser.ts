@@ -503,7 +503,24 @@ export function variantMatches(variant: string, context: StyleContext): boolean 
 	}
 }
 
+const NO_ANIMATION: AnimationMeta = {
+	name: null,
+	durationMs: 150,
+	easing: "ease",
+	transition: false,
+};
+
+function mayHaveAnimation(className: string): boolean {
+	return (
+		className.includes("animate") ||
+		className.includes("transition") ||
+		className.includes("duration-") ||
+		className.includes("ease-")
+	);
+}
+
 export function parseAnimation(className: string): AnimationMeta {
+	if (!mayHaveAnimation(className)) return NO_ANIMATION;
 	const meta: AnimationMeta = {
 		name: null,
 		durationMs: 150,

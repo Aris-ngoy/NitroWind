@@ -11,8 +11,7 @@ export interface ReanimatedRecipe {
 	reverse: boolean;
 }
 
-export function translateClassNameToReanimated(className?: string): ReanimatedRecipe {
-	const meta = parseAnimation(className ?? "");
+export function translateAnimation(meta: AnimationMeta): ReanimatedRecipe {
 	return {
 		name: meta.name,
 		durationMs: meta.name === "spin" || meta.name === "ping" ? 1000 : meta.durationMs,
@@ -21,6 +20,10 @@ export function translateClassNameToReanimated(className?: string): ReanimatedRe
 		repeat: -1,
 		reverse: meta.name === "pulse" || meta.name === "bounce",
 	};
+}
+
+export function translateClassNameToReanimated(className?: string): ReanimatedRecipe {
+	return translateAnimation(parseAnimation(className ?? ""));
 }
 
 export function translateTransition(meta: AnimationMeta): {
@@ -44,10 +47,16 @@ function easingFor(name: AnimationMeta["easing"]) {
 }
 
 export function useAnimatedClassName(
-	className: string | undefined,
+	animation: AnimationMeta | undefined,
 	baseStyle?: ViewStyle,
 ): ViewStyle | Animated.WithAnimatedValue<ViewStyle> | undefined {
-	const recipe = useMemo(() => translateClassNameToReanimated(className), [className]);
+	const recipe = useMemo(
+		() =>
+			animation == null
+				? translateAnimation({ name: null, durationMs: 150, easing: "ease", transition: false })
+				: translateAnimation(animation),
+		[animation],
+	);
 	const progress = useRef(new Animated.Value(0)).current;
 
 	useEffect(() => {

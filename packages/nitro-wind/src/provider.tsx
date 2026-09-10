@@ -4,9 +4,19 @@ import {
 	type PlatformName,
 	type StyleContext,
 } from "nitro-wind-core";
-import { type ReactNode, createContext, useCallback, useContext, useMemo, useState } from "react";
-import { Appearance, I18nManager, Platform, useWindowDimensions } from "react-native";
+import {
+	type ReactNode,
+	createContext,
+	useContext,
+	useEffect,
+	useRef,
+	useState,
+	useSyncExternalStore,
+} from "react";
+import { Appearance, I18nManager, Platform } from "react-native";
 import { setEngineThemeName } from "./engine";
+import { getWindowSize } from "./layout";
+import { type SnapshotStore, createSnapshotStore } from "./store";
 
 export interface GroupState {
 	active: boolean;
@@ -29,7 +39,7 @@ const DEFAULT_INTERACTION: InteractionState = {
 	disabled: false,
 };
 
-interface NitroWindContextValue {
+export interface NitroWindContextValue {
 	theme: ColorScheme;
 	setTheme: (theme: ColorScheme) => void;
 	group: GroupState;
@@ -37,67 +47,169 @@ interface NitroWindContextValue {
 	context: StyleContext;
 }
 
-const NitroWindContext = createContext<NitroWindContextValue | null>(null);
+type WindStore = SnapshotStore<NitroWindContextValue>;
 
-export interface NitroWindProviderProps {
-	theme?: ColorScheme;
-	children: ReactNode;
+const NitroWindStoreContext = createContext<WindStore | null>(null);
+
+function readScheme(): ColorScheme {
+	return Appearance.getColorScheme() === "dark" ? "dark" : "light";
 }
 
-export function NitroWindProvider({ theme: themeProp, children }: NitroWindProviderProps) {
-	const systemScheme = Appearance.getColorScheme() === "dark" ? "dark" : "light";
-	const [themeState, setThemeState] = useState<ColorScheme>(themeProp ?? systemScheme);
-	const theme = themeProp ?? themeState;
-	const { width, height } = useWindowDimensions();
+function windowSize(): { width: number; height: number } {
+	return getWindowSize();
+}
 
-	const setTheme = useCallback((next: ColorScheme) => {
-		setThemeState(next);
-		setEngineThemeName(next);
-	}, []);
-
-	const context = useMemo<StyleContext>(
-		() => ({
+function makeValue(
+	theme: ColorScheme,
+	group: GroupState,
+	interaction: InteractionState,
+	setTheme: (theme: ColorScheme) => void,
+): NitroWindContextValue {
+	const { width, height } = windowSize();
+	return {
+		theme,
+		setTheme,
+		group,
+		interaction,
+		context: {
 			...DEFAULT_STYLE_CONTEXT,
 			colorScheme: theme,
 			platform: Platform.OS as PlatformName,
 			width,
 			height,
 			isRTL: I18nManager.isRTL,
-		}),
-		[theme, width, height],
-	);
+			pressed: interaction.pressed,
+			hovered: interaction.hovered,
+			focused: interaction.focused,
+			disabled: interaction.disabled,
+			groupActive: group.active,
+			groupFocus: group.focus,
+			groupHover: group.hover,
+		},
+	};
+}
 
-	const value = useMemo<NitroWindContextValue>(
-		() => ({
-			theme,
-			setTheme,
-			group: DEFAULT_GROUP,
-			interaction: DEFAULT_INTERACTION,
-			context,
-		}),
-		[theme, setTheme, context],
-	);
+function sameGroup(a: GroupState, b: GroupState): boolean {
+	return a.active === b.active && a.focus === b.focus && a.hover === b.hover;
+}
 
-	return <NitroWindContext.Provider value={value}>{children}</NitroWindContext.Provider>;
+function sameInteraction(a: InteractionState, b: InteractionState): boolean {
+	return (
+		a.pressed === b.pressed &&
+		a.hovered === b.hovered &&
+		a.focused === b.focused &&
+		a.disabled === b.disabled
+	);
+}
+
+function sameContextValue(a: NitroWindContextValue, b: NitroWindContextValue): boolean {
+	return (
+		a.theme === b.theme &&
+		a.setTheme === b.setTheme &&
+		sameGroup(a.group, b.group) &&
+		sameInteraction(a.interaction, b.interaction) &&
+		a.context.width === b.context.width &&
+		a.context.height === b.context.height
+	);
+}
+
+function writeStore(store: WindStore, next: NitroWindContextValue): void {
+	if (sameContextValue(store.get(), next)) {
+		return;
+	}
+	store.set(next);
+}
+
+function useSyncedStore(next: NitroWindContextValue): WindStore {
+	const [store] = useState<WindStore>(() => createSnapshotStore(next));
+	const changedRef = useRef(false);
+
+	if (!sameContextValue(store.get(), next)) {
+		store.update(next);
+		changedRef.current = true;
+	}
+
+	useEffect(() => {
+		if (changedRef.current) {
+			changedRef.current = false;
+			store.notify();
+		}
+	});
+
+	return store;
+}
+
+const fallbackSetTheme = (theme: ColorScheme): void => {
+	setEngineThemeName(theme);
+	const prev = fallbackStore.get();
+	writeStore(fallbackStore, makeValue(theme, prev.group, prev.interaction, fallbackSetTheme));
+};
+
+const fallbackStore: WindStore = createSnapshotStore(
+	makeValue("light", DEFAULT_GROUP, DEFAULT_INTERACTION, fallbackSetTheme),
+);
+
+function syncFallbackScheme(scheme: ColorScheme = readScheme()): void {
+	const prev = fallbackStore.get();
+	if (prev.theme === scheme) return;
+	writeStore(fallbackStore, makeValue(scheme, prev.group, prev.interaction, prev.setTheme));
+}
+
+syncFallbackScheme();
+Appearance.addChangeListener(({ colorScheme }) => {
+	syncFallbackScheme(colorScheme === "dark" ? "dark" : "light");
+});
+
+export function NitroWindProvider({
+	theme: themeProp,
+	children,
+}: {
+	theme?: ColorScheme;
+	children: ReactNode;
+}) {
+	const [store] = useState<WindStore>(() => {
+		const scheme = themeProp ?? readScheme();
+		const created = createSnapshotStore(
+			makeValue(scheme, DEFAULT_GROUP, DEFAULT_INTERACTION, () => {}),
+		);
+		const setTheme = (next: ColorScheme) => {
+			setEngineThemeName(next);
+			const prev = created.get();
+			writeStore(created, makeValue(next, prev.group, prev.interaction, setTheme));
+		};
+		created.update(makeValue(scheme, DEFAULT_GROUP, DEFAULT_INTERACTION, setTheme));
+		setEngineThemeName(scheme);
+		return created;
+	});
+
+	const themeChangedRef = useRef(false);
+
+	if (themeProp != null) {
+		const prev = store.get();
+		if (prev.theme !== themeProp) {
+			setEngineThemeName(themeProp);
+			store.update(makeValue(themeProp, prev.group, prev.interaction, prev.setTheme));
+			themeChangedRef.current = true;
+		}
+	}
+
+	useEffect(() => {
+		if (themeChangedRef.current) {
+			themeChangedRef.current = false;
+			store.notify();
+		}
+	});
+
+	return <NitroWindStoreContext.Provider value={store}>{children}</NitroWindStoreContext.Provider>;
+}
+
+export function useNitroWindStore(): WindStore {
+	return useContext(NitroWindStoreContext) ?? fallbackStore;
 }
 
 export function useNitroWind(): NitroWindContextValue {
-	const value = useContext(NitroWindContext);
-	if (!value) {
-		const scheme = Appearance.getColorScheme() === "dark" ? "dark" : "light";
-		return {
-			theme: scheme,
-			setTheme: () => {},
-			group: DEFAULT_GROUP,
-			interaction: DEFAULT_INTERACTION,
-			context: {
-				...DEFAULT_STYLE_CONTEXT,
-				colorScheme: scheme,
-				platform: Platform.OS as PlatformName,
-			},
-		};
-	}
-	return value;
+	const store = useNitroWindStore();
+	return useSyncExternalStore(store.subscribe, store.get, store.get);
 }
 
 export function GroupProvider({
@@ -107,21 +219,11 @@ export function GroupProvider({
 	value: GroupState;
 	children: ReactNode;
 }) {
-	const parent = useNitroWind();
-	const next = useMemo(
-		() => ({
-			...parent,
-			group: value,
-			context: {
-				...parent.context,
-				groupActive: value.active,
-				groupFocus: value.focus,
-				groupHover: value.hover,
-			},
-		}),
-		[parent, value],
-	);
-	return <NitroWindContext.Provider value={next}>{children}</NitroWindContext.Provider>;
+	const parentStore = useNitroWindStore();
+	const parent = useSyncExternalStore(parentStore.subscribe, parentStore.get, parentStore.get);
+	const next = makeValue(parent.theme, value, parent.interaction, parent.setTheme);
+	const store = useSyncedStore(next);
+	return <NitroWindStoreContext.Provider value={store}>{children}</NitroWindStoreContext.Provider>;
 }
 
 export function InteractionProvider({
@@ -131,18 +233,10 @@ export function InteractionProvider({
 	value: Partial<InteractionState>;
 	children: ReactNode;
 }) {
-	const parent = useNitroWind();
-	const interaction = { ...parent.interaction, ...value };
-	const next = {
-		...parent,
-		interaction,
-		context: {
-			...parent.context,
-			pressed: interaction.pressed,
-			hovered: interaction.hovered,
-			focused: interaction.focused,
-			disabled: interaction.disabled,
-		},
-	};
-	return <NitroWindContext.Provider value={next}>{children}</NitroWindContext.Provider>;
+	const parentStore = useNitroWindStore();
+	const parent = useSyncExternalStore(parentStore.subscribe, parentStore.get, parentStore.get);
+	const interaction: InteractionState = { ...parent.interaction, ...value };
+	const next = makeValue(parent.theme, parent.group, interaction, parent.setTheme);
+	const store = useSyncedStore(next);
+	return <NitroWindStoreContext.Provider value={store}>{children}</NitroWindStoreContext.Provider>;
 }

@@ -1,41 +1,46 @@
-import { type StyleContext, type StyleRecord, contextBitmask } from "./types";
+import { type StyleContext, contextBitmask } from "./types";
 
-function fnv1a(input: string): number {
-	let hash = 0x811c9dc5;
+const FNV_OFFSET = 14695981039346656037n;
+const FNV_PRIME = 1099511628211n;
+const MASK64 = 0xffffffffffffffffn;
+const GOLDEN = 0x9e3779b97f4a7c15n;
+
+export function fnv1a64(input: string): bigint {
+	let hash = FNV_OFFSET;
 	for (let i = 0; i < input.length; i++) {
-		hash ^= input.charCodeAt(i);
-		hash = Math.imul(hash, 0x01000193);
+		hash ^= BigInt(input.charCodeAt(i) & 0xff);
+		hash = (hash * FNV_PRIME) & MASK64;
 	}
-	return hash >>> 0;
+	return hash;
 }
 
-export function cacheKey(className: string, context: StyleContext, themeName: string): string {
-	return `${fnv1a(className).toString(16)}:${themeName}:${contextBitmask(context).toString(16)}`;
+export function cacheKey(className: string, context: StyleContext): bigint {
+	const mask = BigInt(contextBitmask(context) >>> 0);
+	return (fnv1a64(className) ^ ((mask * GOLDEN) & MASK64)) & MASK64;
 }
 
-export class StyleCache {
+export function fastCacheKey(className: string, context: StyleContext): string {
+	return `${contextBitmask(context)}:${className}`;
+}
+
+export class StyleCache<T, K = string | bigint> {
 	private readonly maxSize: number;
-	private readonly map = new Map<string, StyleRecord>();
+	private readonly map = new Map<K, T>();
 
 	constructor(maxSize = 2048) {
 		this.maxSize = maxSize;
 	}
 
-	get(key: string): StyleRecord | undefined {
-		const value = this.map.get(key);
-		if (value === undefined) return undefined;
-		this.map.delete(key);
-		this.map.set(key, value);
-		return value;
+	get(key: K): T | undefined {
+		return this.map.get(key);
 	}
 
-	set(key: string, value: StyleRecord): void {
-		if (this.map.has(key)) this.map.delete(key);
-		this.map.set(key, value);
-		if (this.map.size > this.maxSize) {
+	set(key: K, value: T): void {
+		if (this.map.size >= this.maxSize && !this.map.has(key)) {
 			const oldest = this.map.keys().next().value;
 			if (oldest !== undefined) this.map.delete(oldest);
 		}
+		this.map.set(key, value);
 	}
 
 	clear(): void {

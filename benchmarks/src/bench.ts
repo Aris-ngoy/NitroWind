@@ -48,6 +48,13 @@ bench("nitro-wind JS compute (simple, cache hit)", iterations, () => {
 	cached.compute(SIMPLE);
 });
 
+const hot = new JsStyleEngine();
+const HOT = "flex-row items-center px-4 py-3 border-b border-slate-800 bg-slate-900";
+hot.compute(HOT);
+bench("nitro-wind JS compute (identical last-hit)", iterations, () => {
+	hot.compute(HOT);
+});
+
 bench("StyleSheet-like object (complex includes)", iterations, () => {
 	stylesheetBaseline(COMPLEX);
 });

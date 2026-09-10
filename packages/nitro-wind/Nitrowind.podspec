@@ -21,6 +21,7 @@ Pod::Spec.new do |s|
     # Implementation (C++ objects)
     "cpp/**/*.{hpp,cpp}",
   ]
+  s.exclude_files = "cpp/tests/**/*"
 
   load 'nitrogen/generated/ios/Nitrowind+autolinking.rb'
   add_nitrogen_files(s)

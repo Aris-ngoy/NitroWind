@@ -30,16 +30,23 @@ function Row({ item }: { item: CatalogItem }) {
 
 const RenderRow = memo(Row);
 
-export function UniwindScreen({ onLayout }: { onLayout: () => void }) {
+export function UniwindScreen({
+	onLayout,
+	items = CATALOG_ITEMS,
+}: {
+	onLayout?: () => void;
+	items?: CatalogItem[];
+}) {
 	const screenStyle = useUniwindStyle(classes.screen, uniwindFallback.screen);
 	return (
-		<View className={classes.screen} style={screenStyle} onLayout={onLayout}>
+		<View className={classes.screen} style={screenStyle}>
 			<FlatList
-				data={CATALOG_ITEMS}
+				data={items}
 				keyExtractor={(item) => item.id}
 				renderItem={({ item }) => <RenderRow item={item} />}
 				initialNumToRender={40}
 				windowSize={8}
+				ListFooterComponent={<View style={{ height: 1 }} onLayout={onLayout} />}
 			/>
 		</View>
 	);

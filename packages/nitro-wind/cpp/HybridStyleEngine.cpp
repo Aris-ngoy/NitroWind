@@ -1,9 +1,56 @@
 #include "HybridStyleEngine.hpp"
 
-namespace margelo::nitro::nitrowind {
+#include "engine/Hash.hpp"
+#include <NitroModules/AnyMap.hpp>
 
-nitrowind::engine::EngineContext HybridStyleEngine::toEngineContext(const StyleContext& context) const {
-  nitrowind::engine::EngineContext engineContext;
+namespace margelo::nitro::nitrowind {
+namespace {
+
+using margelo::nitro::AnyArray;
+using margelo::nitro::AnyMap;
+using margelo::nitro::AnyObject;
+using margelo::nitro::AnyValue;
+
+AnyValue toAnyValue(const ::nitrowind::engine::StyleValue& value) {
+  if (std::holds_alternative<std::string>(value)) {
+    return std::get<std::string>(value);
+  }
+  return std::get<double>(value);
+}
+
+std::shared_ptr<AnyMap> toAnyMap(const ::nitrowind::engine::InflatedStyle& style) {
+  auto map = AnyMap::make(
+      style.props.size() + (style.shadowOffset ? 1 : 0) + (style.transform.empty() ? 0 : 1));
+  for (const auto& [key, value] : style.props) {
+    if (std::holds_alternative<std::string>(value)) {
+      map->setString(key, std::get<std::string>(value));
+    } else {
+      map->setDouble(key, std::get<double>(value));
+    }
+  }
+  if (style.shadowOffset) {
+    AnyObject offset;
+    offset.emplace("width", (*style.shadowOffset)[0]);
+    offset.emplace("height", (*style.shadowOffset)[1]);
+    map->setObject("shadowOffset", std::move(offset));
+  }
+  if (!style.transform.empty()) {
+    AnyArray transforms;
+    transforms.reserve(style.transform.size());
+    for (const auto& [prop, value] : style.transform) {
+      AnyObject entry;
+      entry.emplace(prop, toAnyValue(value));
+      transforms.emplace_back(std::move(entry));
+    }
+    map->setArray("transform", std::move(transforms));
+  }
+  return map;
+}
+
+} // namespace
+
+::nitrowind::engine::EngineContext HybridStyleEngine::toEngineContext(const StyleContext& context) const {
+  ::nitrowind::engine::EngineContext engineContext;
   engineContext.colorScheme = context.colorScheme;
   engineContext.platform = context.platform;
   engineContext.width = context.width;
@@ -19,24 +66,63 @@ nitrowind::engine::EngineContext HybridStyleEngine::toEngineContext(const StyleC
   return engineContext;
 }
 
-std::unordered_map<std::string, std::variant<std::string, double>> HybridStyleEngine::compute(
-    const std::string& className,
-    const StyleContext& context) {
-  return engine_.compute(className, toEngineContext(context));
+StyleResult HybridStyleEngine::toNativeResult(const ::nitrowind::engine::StyleResult& computed) const {
+  const auto& animation = computed.animation;
+  return StyleResult(
+      toAnyMap(computed.style),
+      AnimationMeta(animation.name, animation.durationMs, animation.easing, animation.transition));
 }
 
-std::vector<std::unordered_map<std::string, std::variant<std::string, double>>> HybridStyleEngine::computeBatch(
+StyleResult HybridStyleEngine::compute(const std::string& className, const StyleContext& context) {
+  const auto engineContext = toEngineContext(context);
+  const uint64_t key = ::nitrowind::engine::cacheKey(className, ::nitrowind::engine::contextBitmask(engineContext));
+  if (hasLast_ && key == lastKey_) {
+    return lastResult_;
+  }
+  const auto it = nativeCache_.find(key);
+  if (it != nativeCache_.end()) {
+    hasLast_ = true;
+    lastKey_ = key;
+    lastResult_ = it->second;
+    return lastResult_;
+  }
+
+  auto computed = toNativeResult(engine_.compute(className, engineContext));
+  if (nativeCache_.size() >= 4096) {
+    nativeCache_.clear();
+  }
+  nativeCache_[key] = computed;
+  hasLast_ = true;
+  lastKey_ = key;
+  lastResult_ = std::move(computed);
+  return lastResult_;
+}
+
+std::vector<StyleResult> HybridStyleEngine::computeBatch(
     const std::vector<std::string>& classNames,
     const StyleContext& context) {
-  return engine_.computeBatch(classNames, toEngineContext(context));
+  std::vector<StyleResult> results;
+  results.reserve(classNames.size());
+  for (const auto& item : classNames) {
+    results.push_back(compute(item, context));
+  }
+  return results;
 }
 
 void HybridStyleEngine::setThemeName(const std::string& name) {
   engine_.setThemeName(name);
+  nativeCache_.clear();
+  hasLast_ = false;
+  lastKey_ = 0;
+  lastResult_ = {};
 }
 
 void HybridStyleEngine::clearCache() {
   engine_.clearCache();
+  nativeCache_.clear();
+  hasLast_ = false;
+  lastKey_ = 0;
+  lastResult_ = {};
 }
 
 double HybridStyleEngine::getCacheSize() {

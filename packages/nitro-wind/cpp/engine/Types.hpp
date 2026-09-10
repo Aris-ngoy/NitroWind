@@ -1,8 +1,12 @@
 #pragma once
 
+#include "Hash.hpp"
 #include <algorithm>
+#include <array>
 #include <cstdint>
+#include <optional>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <variant>
 #include <vector>
@@ -11,6 +15,9 @@ namespace nitrowind::engine {
 
 using StyleValue = std::variant<std::string, double>;
 using StyleRecord = std::unordered_map<std::string, StyleValue>;
+
+template <typename V>
+using SvMap = std::unordered_map<std::string, V, TransparentStringHash, TransparentStringEqual>;
 
 struct EngineContext {
   std::string colorScheme = "light";
@@ -27,11 +34,32 @@ struct EngineContext {
   bool groupHover = false;
 };
 
-struct ClassToken {
-  std::string raw;
-  std::vector<std::string> variants;
-  std::string utility;
+constexpr std::size_t kMaxVariants = 8;
+
+struct ClassTokenView {
+  std::string_view raw;
+  std::array<std::string_view, kMaxVariants> variants{};
+  std::uint8_t variantCount = 0;
+  std::string_view utility;
   bool important = false;
+};
+
+struct AnimationMeta {
+  std::optional<std::string> name;
+  double durationMs = 150;
+  std::string easing = "ease";
+  bool transition = false;
+};
+
+struct InflatedStyle {
+  StyleRecord props;
+  std::optional<std::array<double, 2>> shadowOffset;
+  std::vector<std::pair<std::string, StyleValue>> transform;
+};
+
+struct StyleResult {
+  InflatedStyle style;
+  AnimationMeta animation;
 };
 
 constexpr uint32_t BIT_DARK = 1u << 0;

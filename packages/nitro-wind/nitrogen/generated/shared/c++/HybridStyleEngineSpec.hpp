@@ -13,12 +13,13 @@
 #error NitroModules cannot be found! Are you sure you installed NitroModules properly?
 #endif
 
+// Forward declaration of `StyleResult` to properly resolve imports.
+namespace margelo::nitro::nitrowind { struct StyleResult; }
 // Forward declaration of `StyleContext` to properly resolve imports.
 namespace margelo::nitro::nitrowind { struct StyleContext; }
 
+#include "StyleResult.hpp"
 #include <string>
-#include <variant>
-#include <unordered_map>
 #include "StyleContext.hpp"
 #include <vector>
 
@@ -53,8 +54,8 @@ namespace margelo::nitro::nitrowind {
 
     public:
       // Methods
-      virtual std::unordered_map<std::string, std::variant<std::string, double>> compute(const std::string& className, const StyleContext& context) = 0;
-      virtual std::vector<std::unordered_map<std::string, std::variant<std::string, double>>> computeBatch(const std::vector<std::string>& classNames, const StyleContext& context) = 0;
+      virtual StyleResult compute(const std::string& className, const StyleContext& context) = 0;
+      virtual std::vector<StyleResult> computeBatch(const std::vector<std::string>& classNames, const StyleContext& context) = 0;
       virtual void setThemeName(const std::string& name) = 0;
       virtual void clearCache() = 0;
       virtual double getCacheSize() = 0;

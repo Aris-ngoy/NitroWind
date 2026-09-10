@@ -1,30 +1,34 @@
 #include "Engine.hpp"
 #include "Hash.hpp"
+#include "Inflate.hpp"
 #include "Parser.hpp"
-
-#include <sstream>
 
 namespace nitrowind::engine {
 
-static std::string makeKey(const std::string& className, const EngineContext& context, const std::string& themeName) {
-  const uint64_t hash = fnv1a64(className);
-  std::ostringstream stream;
-  stream << std::hex << hash << ':' << themeName << ':' << contextBitmask(context);
-  return stream.str();
-}
-
-StyleRecord Engine::compute(const std::string& className, const EngineContext& context) {
-  const auto key = makeKey(className, context, themeName_);
-  if (const auto* cached = cache_.get(key)) {
-    return *cached;
+StyleResult Engine::compute(const std::string& className, const EngineContext& context) {
+  const uint64_t key = cacheKey(className, contextBitmask(context));
+  if (hasLast_ && key == lastKey_) {
+    return lastResult_;
   }
-  auto computed = parseClassName(className, context);
+  if (const auto* cached = cache_.get(key)) {
+    hasLast_ = true;
+    lastKey_ = key;
+    lastResult_ = *cached;
+    return lastResult_;
+  }
+  const auto parsed = parseResolved(className, context);
+  StyleResult computed;
+  computed.style = inflateStyle(parsed.style);
+  computed.animation = parsed.animation;
   cache_.set(key, computed);
-  return computed;
+  hasLast_ = true;
+  lastKey_ = key;
+  lastResult_ = std::move(computed);
+  return lastResult_;
 }
 
-std::vector<StyleRecord> Engine::computeBatch(const std::vector<std::string>& classNames, const EngineContext& context) {
-  std::vector<StyleRecord> results;
+std::vector<StyleResult> Engine::computeBatch(const std::vector<std::string>& classNames, const EngineContext& context) {
+  std::vector<StyleResult> results;
   results.reserve(classNames.size());
   for (const auto& className : classNames) {
     results.push_back(compute(className, context));
@@ -36,10 +40,16 @@ void Engine::setThemeName(const std::string& name) {
   if (name == themeName_) return;
   themeName_ = name;
   cache_.clear();
+  hasLast_ = false;
+  lastKey_ = 0;
+  lastResult_ = {};
 }
 
 void Engine::clearCache() {
   cache_.clear();
+  hasLast_ = false;
+  lastKey_ = 0;
+  lastResult_ = {};
 }
 
 double Engine::getCacheSize() const {

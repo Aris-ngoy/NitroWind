@@ -1,21 +1,22 @@
 #pragma once
 
+#include "Types.hpp"
 #include <optional>
 #include <string>
 #include <string_view>
-#include <unordered_map>
 
 namespace nitrowind::engine {
 
-const std::unordered_map<std::string, double>& spacingScale();
-const std::unordered_map<std::string, double>& fontSizeScale();
-const std::unordered_map<std::string, std::string>& fontWeightScale();
-const std::unordered_map<std::string, double>& radiusScale();
-const std::unordered_map<std::string, double>& breakpointScale();
-const std::unordered_map<std::string, double>& opacityScale();
-const std::unordered_map<std::string, double>& zIndexScale();
+const SvMap<double>& spacingScale();
+const SvMap<double>& fontSizeScale();
+const SvMap<std::string>& fontWeightScale();
+const SvMap<double>& radiusScale();
+const SvMap<double>& breakpointScale();
+const SvMap<double>& opacityScale();
+const SvMap<double>& zIndexScale();
+const SvMap<double>& durationScale();
 
-std::optional<std::string> resolveColor(std::string_view token);
-std::string applyAlpha(const std::string& color, double alpha);
+std::optional<std::string_view> resolveColor(std::string_view token);
+std::string applyAlpha(std::string_view color, double alpha);
 
 } // namespace nitrowind::engine

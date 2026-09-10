@@ -18,15 +18,22 @@ function Row({ item }: { item: CatalogItem }) {
 
 const RenderRow = memo(Row);
 
-export function NativewindScreen({ onLayout }: { onLayout: () => void }) {
+export function NativewindScreen({
+	onLayout,
+	items = CATALOG_ITEMS,
+}: {
+	onLayout?: () => void;
+	items?: CatalogItem[];
+}) {
 	return (
-		<View className={classes.screen} style={styles.screen} onLayout={onLayout}>
+		<View className={classes.screen} style={styles.screen}>
 			<FlatList
-				data={CATALOG_ITEMS}
+				data={items}
 				keyExtractor={(item) => item.id}
 				renderItem={({ item }) => <RenderRow item={item} />}
 				initialNumToRender={40}
 				windowSize={8}
+				ListFooterComponent={<View style={{ height: 1 }} onLayout={onLayout} />}
 			/>
 		</View>
 	);

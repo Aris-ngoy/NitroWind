@@ -4,7 +4,7 @@ namespace nitrowind::engine {
 
 StyleCache::StyleCache(std::size_t maxSize) : maxSize_(maxSize) {}
 
-const StyleRecord* StyleCache::get(const std::string& key) {
+const StyleResult* StyleCache::get(uint64_t key) {
   auto it = index_.find(key);
   if (it == index_.end()) return nullptr;
   order_.splice(order_.begin(), order_, it->second);
@@ -12,7 +12,7 @@ const StyleRecord* StyleCache::get(const std::string& key) {
   return &it->second->second;
 }
 
-void StyleCache::set(const std::string& key, StyleRecord value) {
+void StyleCache::set(uint64_t key, StyleResult value) {
   auto it = index_.find(key);
   if (it != index_.end()) {
     order_.erase(it->second);

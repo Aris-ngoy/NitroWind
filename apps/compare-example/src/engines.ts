@@ -1,4 +1,4 @@
-export type EngineId = "stylesheet" | "nitrowind" | "nativewind" | "uniwind";
+export type EngineId = "nitrowind" | "nativewind" | "uniwind";
 
 export interface EngineMeta {
 	id: EngineId;
@@ -8,12 +8,6 @@ export interface EngineMeta {
 }
 
 export const ENGINES: EngineMeta[] = [
-	{
-		id: "stylesheet",
-		label: "StyleSheet",
-		runtime: "React Native StyleSheet.create",
-		note: "Baseline. Styles are created once and applied as objects — no className parsing.",
-	},
 	{
 		id: "nitrowind",
 		label: "nitro-wind",

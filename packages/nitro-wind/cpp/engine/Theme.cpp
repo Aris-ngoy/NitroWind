@@ -1,10 +1,7 @@
 #include "Theme.hpp"
 
-#include <array>
-#include <cctype>
-#include <sstream>
-#include <unordered_map>
-#include <vector>
+#include <cstdio>
+#include <cstring>
 
 namespace nitrowind::engine {
 namespace {
@@ -41,8 +38,8 @@ constexpr Palette kPalettes[] = {
     {"rose", {"#fff1f2", "#ffe4e6", "#fecdd3", "#fda4af", "#fb7185", "#f43f5e", "#e11d48", "#be123c", "#9f1239", "#881337", "#4c0519"}},
 };
 
-std::unordered_map<std::string, std::string> buildColorMap() {
-  std::unordered_map<std::string, std::string> colors;
+SvMap<std::string> buildColorMap() {
+  SvMap<std::string> colors;
   colors.emplace("transparent", "transparent");
   colors.emplace("black", "#000000");
   colors.emplace("white", "#ffffff");
@@ -50,21 +47,37 @@ std::unordered_map<std::string, std::string> buildColorMap() {
   colors.emplace("current", "currentColor");
   for (const auto& palette : kPalettes) {
     for (int i = 0; i < 11; ++i) {
-      colors.emplace(std::string(palette.name) + "-" + kShades[i], palette.hex[i]);
+      std::string key;
+      key.reserve(std::strlen(palette.name) + 1 + std::strlen(kShades[i]));
+      key.append(palette.name);
+      key.push_back('-');
+      key.append(kShades[i]);
+      colors.emplace(std::move(key), palette.hex[i]);
     }
   }
   return colors;
 }
 
-const std::unordered_map<std::string, std::string>& colorMap() {
+const SvMap<std::string>& colorMap() {
   static const auto map = buildColorMap();
   return map;
 }
 
+int hexNibble(char ch) {
+  if (ch >= '0' && ch <= '9') return ch - '0';
+  if (ch >= 'a' && ch <= 'f') return ch - 'a' + 10;
+  if (ch >= 'A' && ch <= 'F') return ch - 'A' + 10;
+  return 0;
+}
+
+int hexByte(std::string_view pair) {
+  return hexNibble(pair[0]) * 16 + hexNibble(pair[1]);
+}
+
 } // namespace
 
-const std::unordered_map<std::string, double>& spacingScale() {
-  static const std::unordered_map<std::string, double> scale = {
+const SvMap<double>& spacingScale() {
+  static const SvMap<double> scale = {
       {"0", 0}, {"px", 1}, {"0.5", 2}, {"1", 4}, {"1.5", 6}, {"2", 8}, {"2.5", 10},
       {"3", 12}, {"3.5", 14}, {"4", 16}, {"5", 20}, {"6", 24}, {"7", 28}, {"8", 32},
       {"9", 36}, {"10", 40}, {"11", 44}, {"12", 48}, {"14", 56}, {"16", 64}, {"20", 80},
@@ -75,39 +88,39 @@ const std::unordered_map<std::string, double>& spacingScale() {
   return scale;
 }
 
-const std::unordered_map<std::string, double>& fontSizeScale() {
-  static const std::unordered_map<std::string, double> scale = {
+const SvMap<double>& fontSizeScale() {
+  static const SvMap<double> scale = {
       {"xs", 12}, {"sm", 14}, {"base", 16}, {"lg", 18}, {"xl", 20}, {"2xl", 24},
       {"3xl", 30}, {"4xl", 36}, {"5xl", 48}, {"6xl", 60}, {"7xl", 72}, {"8xl", 96}, {"9xl", 128},
   };
   return scale;
 }
 
-const std::unordered_map<std::string, std::string>& fontWeightScale() {
-  static const std::unordered_map<std::string, std::string> scale = {
+const SvMap<std::string>& fontWeightScale() {
+  static const SvMap<std::string> scale = {
       {"thin", "100"}, {"extralight", "200"}, {"light", "300"}, {"normal", "400"},
       {"medium", "500"}, {"semibold", "600"}, {"bold", "700"}, {"extrabold", "800"}, {"black", "900"},
   };
   return scale;
 }
 
-const std::unordered_map<std::string, double>& radiusScale() {
-  static const std::unordered_map<std::string, double> scale = {
+const SvMap<double>& radiusScale() {
+  static const SvMap<double> scale = {
       {"none", 0}, {"sm", 2}, {"DEFAULT", 4}, {"md", 6}, {"lg", 8},
       {"xl", 12}, {"2xl", 16}, {"3xl", 24}, {"full", 9999},
   };
   return scale;
 }
 
-const std::unordered_map<std::string, double>& breakpointScale() {
-  static const std::unordered_map<std::string, double> scale = {
+const SvMap<double>& breakpointScale() {
+  static const SvMap<double> scale = {
       {"sm", 640}, {"md", 768}, {"lg", 1024}, {"xl", 1280}, {"2xl", 1536},
   };
   return scale;
 }
 
-const std::unordered_map<std::string, double>& opacityScale() {
-  static const std::unordered_map<std::string, double> scale = {
+const SvMap<double>& opacityScale() {
+  static const SvMap<double> scale = {
       {"0", 0}, {"5", 0.05}, {"10", 0.1}, {"15", 0.15}, {"20", 0.2}, {"25", 0.25},
       {"30", 0.3}, {"40", 0.4}, {"50", 0.5}, {"60", 0.6}, {"70", 0.7}, {"75", 0.75},
       {"80", 0.8}, {"90", 0.9}, {"95", 0.95}, {"100", 1},
@@ -115,30 +128,40 @@ const std::unordered_map<std::string, double>& opacityScale() {
   return scale;
 }
 
-const std::unordered_map<std::string, double>& zIndexScale() {
-  static const std::unordered_map<std::string, double> scale = {
+const SvMap<double>& zIndexScale() {
+  static const SvMap<double> scale = {
       {"0", 0}, {"10", 10}, {"20", 20}, {"30", 30}, {"40", 40}, {"50", 50},
   };
   return scale;
 }
 
-std::optional<std::string> resolveColor(std::string_view token) {
+const SvMap<double>& durationScale() {
+  static const SvMap<double> scale = {
+      {"75", 75}, {"100", 100}, {"150", 150}, {"200", 200},
+      {"300", 300}, {"500", 500}, {"700", 700}, {"1000", 1000},
+  };
+  return scale;
+}
+
+std::optional<std::string_view> resolveColor(std::string_view token) {
   const auto& colors = colorMap();
-  auto it = colors.find(std::string(token));
+  auto it = colors.find(token);
   if (it == colors.end()) return std::nullopt;
   return it->second;
 }
 
-std::string applyAlpha(const std::string& color, double alpha) {
-  if (color == "transparent" || color.size() < 7 || color.front() != '#') return color;
+std::string applyAlpha(std::string_view color, double alpha) {
+  if (color == "transparent" || color.size() != 7 || color.front() != '#') {
+    return std::string(color);
+  }
   const auto hex = color.substr(1);
-  if (hex.size() != 6) return color;
-  const int r = std::stoi(hex.substr(0, 2), nullptr, 16);
-  const int g = std::stoi(hex.substr(2, 2), nullptr, 16);
-  const int b = std::stoi(hex.substr(4, 2), nullptr, 16);
-  std::ostringstream stream;
-  stream << "rgba(" << r << "," << g << "," << b << "," << alpha << ")";
-  return stream.str();
+  const int r = hexByte(hex.substr(0, 2));
+  const int g = hexByte(hex.substr(2, 2));
+  const int b = hexByte(hex.substr(4, 2));
+  char buf[64];
+  const int n = std::snprintf(buf, sizeof(buf), "rgba(%d,%d,%d,%g)", r, g, b, alpha);
+  if (n <= 0) return std::string(color);
+  return std::string(buf, static_cast<std::size_t>(n));
 }
 
 } // namespace nitrowind::engine

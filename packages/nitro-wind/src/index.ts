@@ -1,7 +1,8 @@
-export { jsStyleEngine, inflateStyle, parseClassName, parseAnimation } from "nitro-wind-core";
-export type { StyleContext, StyleRecord, AnimationMeta } from "nitro-wind-core";
+export { jsStyleEngine, parseClassName, parseAnimation } from "nitro-wind-core";
+export type { StyleContext, StyleRecord, AnimationMeta, StyleResult } from "nitro-wind-core";
 export {
 	computeStyle,
+	computeStaticStyle,
 	isNativeEngineAvailable,
 	setEngineThemeName,
 	clearEngineCache,
@@ -29,6 +30,7 @@ export {
 } from "./components";
 export {
 	translateClassNameToReanimated,
+	translateAnimation,
 	translateTransition,
 	useAnimatedClassName,
 	getReanimated,

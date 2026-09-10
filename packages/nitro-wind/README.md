@@ -31,7 +31,7 @@ bun add nitro-wind react-native-nitro-modules
 
 For Expo Go, the pure JavaScript engine is used automatically. Custom development builds and bare React Native apps can use the C++ Nitro HybridObject.
 
-Optional Babel automapping (rewrites `react-native` `View`/`Text` imports so they accept `className`):
+Optional Babel plugin (rewrites `react-native` `View`/`Text` imports so they accept `className`, and hoists invariant static `className`s into `StyleSheet.create`):
 
 ```js
 module.exports = {

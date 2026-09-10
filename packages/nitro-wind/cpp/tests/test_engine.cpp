@@ -1,4 +1,5 @@
 #include "engine/Engine.hpp"
+#include "engine/Hash.hpp"
 #include "engine/Parser.hpp"
 #include "engine/Tokenizer.hpp"
 
@@ -37,18 +38,39 @@ static std::string asString(const StyleRecord& record, const std::string& key) {
   return std::get<std::string>(it->second);
 }
 
+static double asNumber(const StyleResult& result, const std::string& key) {
+  return asNumber(result.style.props, key);
+}
+
+static std::string asString(const StyleResult& result, const std::string& key) {
+  return asString(result.style.props, key);
+}
+
 int main() {
+  expectEqual(fnv1a64(""), 14695981039346656037ull, "fnv1a64 empty string is the offset basis");
+
   EngineContext context;
 
-  const auto tokens = tokenize("dark:ios:p-4 bg-red-500");
-  expectEqual(tokens.size(), static_cast<std::size_t>(2), "tokenize splits class names");
-  expectEqual(tokens[0].utility, std::string("p-4"), "first utility is p-4");
-  expectEqual(tokens[0].variants.size(), static_cast<std::size_t>(2), "stacked variants parsed");
+  std::size_t tokenCount = 0;
+  std::string firstUtility;
+  std::uint8_t firstVariantCount = 0;
+  tokenize("dark:ios:p-4 bg-red-500", [&](const ClassTokenView& token) {
+    if (tokenCount == 0) {
+      firstUtility = std::string(token.utility);
+      firstVariantCount = token.variantCount;
+    }
+    ++tokenCount;
+  });
+  expectEqual(tokenCount, static_cast<std::size_t>(2), "tokenize splits class names");
+  expectEqual(firstUtility, std::string("p-4"), "first utility is p-4");
+  expectEqual(static_cast<std::size_t>(firstVariantCount), static_cast<std::size_t>(2), "stacked variants parsed");
 
   Engine engine;
   const auto style = engine.compute("p-4 bg-red-500", context);
   expectEqual(asNumber(style, "padding"), 16.0, "p-4 -> padding 16");
   expectEqual(asString(style, "backgroundColor"), std::string("#ef4444"), "bg-red-500 -> #ef4444");
+  expectEqual(style.animation.name.has_value(), false, "static className has no animation name");
+  expectEqual(style.animation.transition, false, "static className has no transition");
 
   EngineContext darkIos = context;
   darkIos.colorScheme = "dark";
@@ -62,9 +84,48 @@ int main() {
   const auto groupStyle = parseClassName("text-white group-active:text-red-500", grouped);
   expectEqual(asString(groupStyle, "color"), std::string("#ef4444"), "group-active variant");
 
-  engine.compute("flex-1 items-center", context);
-  engine.compute("flex-1 items-center", context);
-  expectEqual(engine.getCacheSize(), 2.0, "cache stores unique class names");
+  const auto shadow = engine.compute("shadow-md", context);
+  expectEqual(shadow.style.shadowOffset.has_value(), true, "shadow-md inflates shadowOffset");
+  expectEqual((*shadow.style.shadowOffset)[0], 0.0, "shadowOffset.width is 0");
+  expectEqual((*shadow.style.shadowOffset)[1], 4.0, "shadowOffset.height is 4");
+  expectEqual(asNumber(shadow, "elevation"), 4.0, "shadow-md elevation 4");
+
+  const auto moved = engine.compute("translate-x-4 scale-110", context);
+  expectEqual(moved.style.transform.size(), static_cast<std::size_t>(2), "transform inflates translate and scale");
+  expectEqual(moved.style.transform[0].first, std::string("translateX"), "first transform is translateX");
+  expectEqual(std::get<double>(moved.style.transform[0].second), 16.0, "translate-x-4 -> 16");
+  expectEqual(std::get<double>(moved.style.transform[1].second), 1.1, "scale-110 -> 1.1");
+
+  const auto animated = engine.compute("transition-all duration-300 ease-in-out animate-spin", context);
+  expectEqual(animated.animation.name.has_value(), true, "animate-spin sets name");
+  expectEqual(*animated.animation.name, std::string("spin"), "animation name is spin");
+  expectEqual(animated.animation.durationMs, 300.0, "duration-300");
+  expectEqual(animated.animation.easing, std::string("ease-in-out"), "ease-in-out");
+  expectEqual(animated.animation.transition, true, "transition-all sets transition");
+
+  Engine cacheEngine;
+  cacheEngine.compute("flex-1 items-center", context);
+  cacheEngine.compute("flex-1 items-center", context);
+  expectEqual(cacheEngine.getCacheSize(), 1.0, "cache stores unique class names");
+
+  Engine schemeEngine;
+  schemeEngine.compute("bg-white dark:bg-black", context);
+  EngineContext darkCtx = context;
+  darkCtx.colorScheme = "dark";
+  schemeEngine.compute("bg-white dark:bg-black", darkCtx);
+  expectEqual(schemeEngine.getCacheSize(), 2.0, "different bitmasks are distinct keys");
+
+  StyleRecord patched;
+  applyUtility("p-2", patched);
+  applyUtility("p-4", patched);
+  applyUtility("bg-red-500/50", patched);
+  expectEqual(asNumber(patched, "padding"), 16.0, "applyUtility writes in place and overrides");
+  expectEqual(asString(patched, "backgroundColor"), std::string("rgba(239,68,68,0.5)"), "opacity modifier uses stack-formatted rgba");
+
+  const auto arbitrary = parseClassName("p-[20] bg-[#ff0055] w-[50%]", context);
+  expectEqual(asNumber(arbitrary, "padding"), 20.0, "arbitrary px-less number");
+  expectEqual(asString(arbitrary, "backgroundColor"), std::string("#ff0055"), "arbitrary hex color");
+  expectEqual(asString(arbitrary, "width"), std::string("50%"), "arbitrary percent");
 
   if (failures > 0) {
     std::cerr << failures << " test(s) failed\n";

@@ -7,6 +7,7 @@ add_executable(nitro_wind_engine_tests
   ../engine/Tokenizer.cpp
   ../engine/Parser.cpp
   ../engine/Theme.cpp
+  ../engine/Inflate.cpp
   ../engine/StyleCache.cpp
   ../engine/Engine.cpp
 )

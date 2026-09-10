@@ -13,7 +13,8 @@
 		"typecheck": "turbo run typecheck",
 		"test": "bun test packages/nitro-wind-core packages/nitro-wind",
 		"bench": "bun run --filter nitro-wind-benchmarks bench",
-		"codegen": "bun run --filter nitro-wind codegen"
+		"codegen": "bun run --filter nitro-wind codegen",
+		"postinstall": "bash scripts/fix-expo-modules-jsi.sh"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^1.9.4",
