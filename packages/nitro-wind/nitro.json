@@ -21,7 +21,7 @@
 				"implementationClassName": "HybridNativeThemeTransition"
 			},
 			"android": {
-				"language": "c++",
+				"language": "kotlin",
 				"implementationClassName": "HybridNativeThemeTransition"
 			}
 		}

@@ -15,8 +15,10 @@
 #include <fbjni/fbjni.h>
 #include <NitroModules/HybridObjectRegistry.hpp>
 
+#include "JHybridNativeThemeTransitionSpec.hpp"
+#include "JFunc_void.hpp"
 #include "HybridStyleEngine.hpp"
-#include "HybridNativeThemeTransition.hpp"
+#include <NitroModules/DefaultConstructableObject.hpp>
 
 namespace margelo::nitro::nitrowind {
 
@@ -26,14 +28,22 @@ int initialize(JavaVM* vm) {
   });
 }
 
-
+struct JHybridNativeThemeTransitionSpecImpl: public jni::JavaClass<JHybridNativeThemeTransitionSpecImpl, JHybridNativeThemeTransitionSpec::JavaPart> {
+  static constexpr auto kJavaDescriptor = "Lcom/nitrowind/HybridNativeThemeTransition;";
+  static std::shared_ptr<JHybridNativeThemeTransitionSpec> create() {
+    static const auto constructorFn = javaClassStatic()->getConstructor<JHybridNativeThemeTransitionSpecImpl::javaobject()>();
+    jni::local_ref<JHybridNativeThemeTransitionSpec::JavaPart> javaPart = javaClassStatic()->newObject(constructorFn);
+    return javaPart->getJHybridNativeThemeTransitionSpec();
+  }
+};
 
 void registerAllNatives() {
   using namespace margelo::nitro;
   using namespace margelo::nitro::nitrowind;
 
   // Register native JNI methods
-  
+  margelo::nitro::nitrowind::JHybridNativeThemeTransitionSpec::CxxPart::registerNatives();
+  margelo::nitro::nitrowind::JFunc_void_cxx::registerNatives();
 
   // Register Nitro Hybrid Objects
   HybridObjectRegistry::registerHybridObjectConstructor(
@@ -48,10 +58,7 @@ void registerAllNatives() {
   HybridObjectRegistry::registerHybridObjectConstructor(
     "NativeThemeTransition",
     []() -> std::shared_ptr<HybridObject> {
-      static_assert(std::is_default_constructible_v<HybridNativeThemeTransition>,
-                    "The HybridObject \"HybridNativeThemeTransition\" is not default-constructible! "
-                    "Create a public constructor that takes zero arguments to be able to autolink this HybridObject.");
-      return std::make_shared<HybridNativeThemeTransition>();
+      return JHybridNativeThemeTransitionSpecImpl::create();
     }
   );
 }

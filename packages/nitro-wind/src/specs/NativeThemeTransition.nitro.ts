@@ -29,7 +29,7 @@ export interface TransitionOrigin {
 	y: number;
 }
 
-export interface NativeThemeTransition extends HybridObject<{ ios: "swift"; android: "c++" }> {
+export interface NativeThemeTransition extends HybridObject<{ ios: "swift"; android: "kotlin" }> {
 	prepareTransition(
 		preset: ThemeTransitionPreset,
 		targetTheme: string,

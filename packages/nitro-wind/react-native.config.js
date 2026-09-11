@@ -3,7 +3,7 @@ module.exports = {
 		platforms: {
 			ios: {},
 			android: {
-				cmakeListsPath: "android/CMakeLists.txt",
+				cmakeListsPath: "src/main/jni/CMakeLists.txt",
 			},
 		},
 	},
