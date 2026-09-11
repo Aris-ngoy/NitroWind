@@ -46,6 +46,12 @@ static std::string asString(const StyleResult& result, const std::string& key) {
   return asString(result.style.props, key);
 }
 
+// Generated from packages/nitro-wind-core/src/__tests__/parity.fixtures.ts —
+// the same fixtures parity.test.ts runs against the JS engine. Included here
+// (after expectEqual/asNumber/asString are defined above) rather than linked
+// as a separate translation unit, matching this file's existing style.
+#include "fixtures.generated.hpp"
+
 int main() {
   expectEqual(fnv1a64(""), 14695981039346656037ull, "fnv1a64 empty string is the offset basis");
 
@@ -126,6 +132,9 @@ int main() {
   expectEqual(asNumber(arbitrary, "padding"), 20.0, "arbitrary px-less number");
   expectEqual(asString(arbitrary, "backgroundColor"), std::string("#ff0055"), "arbitrary hex color");
   expectEqual(asString(arbitrary, "width"), std::string("50%"), "arbitrary percent");
+
+  Engine parityEngine;
+  runParityFixtures(parityEngine);
 
   if (failures > 0) {
     std::cerr << failures << " test(s) failed\n";
