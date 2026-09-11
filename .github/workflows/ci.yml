@@ -23,18 +23,17 @@ jobs:
       - run: bun run typecheck
       - run: bun test packages/nitro-wind-core packages/nitro-wind
       - name: C++ engine tests
+        working-directory: packages/nitro-wind
         run: |
           sudo apt-get update
           sudo apt-get install -y clang
-          clang++ -std=c++20 -I packages/nitro-wind/cpp \
-            packages/nitro-wind/cpp/tests/test_engine.cpp \
-            packages/nitro-wind/cpp/engine/Tokenizer.cpp \
-            packages/nitro-wind/cpp/engine/Parser.cpp \
-            packages/nitro-wind/cpp/engine/Theme.cpp \
-            packages/nitro-wind/cpp/engine/StyleCache.cpp \
-            packages/nitro-wind/cpp/engine/Engine.cpp \
-            -o /tmp/nitro_wind_engine_tests
-          /tmp/nitro_wind_engine_tests
+          # Runs this package's own test:cpp script instead of relisting its
+          # .cpp files here. This step used to relist them inline and had
+          # drifted out of sync with test:cpp (missing Inflate.cpp, added in
+          # be8a812) and cpp/tests/CMakeLists.txt (which never drifted) — an
+          # undefined-symbol link failure this step had stopped catching.
+          # There is now exactly one place that lists the files this build needs.
+          bun run test:cpp
       - run: bun run bench
 
   codegen:
