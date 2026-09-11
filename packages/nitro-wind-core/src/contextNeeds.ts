@@ -45,7 +45,15 @@ function needsAnything(needs: ClassNameContextNeeds): boolean {
 
 function isAnimationUtility(utility: string): boolean {
 	return (
-		utility.startsWith("animate-") || utility === "transition" || utility.startsWith("transition-")
+		utility.startsWith("animate-") ||
+		utility === "transition" ||
+		utility.startsWith("transition-") ||
+		utility.startsWith("nw-entering-") ||
+		utility.startsWith("nw-exiting-") ||
+		utility.startsWith("nw-layout-") ||
+		utility.startsWith("uw-entering-") ||
+		utility.startsWith("uw-exiting-") ||
+		utility.startsWith("uw-layout-")
 	);
 }
 
@@ -65,7 +73,13 @@ export function classNameContextNeeds(className: string): ClassNameContextNeeds 
 		!className.includes(":") &&
 		!/(?:^|\s)group(?:\s|$)/.test(className) &&
 		!className.includes("animate") &&
-		!className.includes("transition")
+		!className.includes("transition") &&
+		!className.includes("nw-entering") &&
+		!className.includes("nw-exiting") &&
+		!className.includes("nw-layout") &&
+		!className.includes("uw-entering") &&
+		!className.includes("uw-exiting") &&
+		!className.includes("uw-layout")
 	) {
 		cache.set(className, NONE);
 		return NONE;

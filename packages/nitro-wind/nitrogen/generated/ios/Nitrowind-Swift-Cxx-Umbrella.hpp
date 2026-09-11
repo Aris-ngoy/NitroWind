@@ -8,10 +8,26 @@
 #pragma once
 
 // Forward declarations of C++ defined types
-
+// Forward declaration of `AppearanceOverride` to properly resolve imports.
+namespace margelo::nitro::nitrowind { enum class AppearanceOverride; }
+// Forward declaration of `HybridNativeThemeTransitionSpec` to properly resolve imports.
+namespace margelo::nitro::nitrowind { class HybridNativeThemeTransitionSpec; }
+// Forward declaration of `ThemeTransitionPreset` to properly resolve imports.
+namespace margelo::nitro::nitrowind { enum class ThemeTransitionPreset; }
+// Forward declaration of `TransitionOrigin` to properly resolve imports.
+namespace margelo::nitro::nitrowind { struct TransitionOrigin; }
 
 // Include C++ defined types
-
+#include "AppearanceOverride.hpp"
+#include "HybridNativeThemeTransitionSpec.hpp"
+#include "ThemeTransitionPreset.hpp"
+#include "TransitionOrigin.hpp"
+#include <NitroModules/Result.hpp>
+#include <exception>
+#include <functional>
+#include <memory>
+#include <optional>
+#include <string>
 
 // C++ helpers for Swift
 #include "Nitrowind-Swift-Cxx-Bridge.hpp"
@@ -23,7 +39,8 @@
 #include <NitroModules/DateToChronoDate.hpp>
 
 // Forward declarations of Swift defined types
-
+// Forward declaration of `HybridNativeThemeTransitionSpec_cxx` to properly resolve imports.
+namespace Nitrowind { class HybridNativeThemeTransitionSpec_cxx; }
 
 // Include Swift defined types
 #if __has_include("Nitrowind-Swift.h")

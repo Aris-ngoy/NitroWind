@@ -22,6 +22,34 @@ mock.module("react-native", () => ({
 	Pressable: "Pressable",
 	View: "View",
 	Text: "Text",
+	FlatList: "FlatList",
+	ScrollView: "ScrollView",
+	TextInput: "TextInput",
+	TouchableOpacity: "TouchableOpacity",
+	TouchableHighlight: "TouchableHighlight",
+	TouchableWithoutFeedback: "TouchableWithoutFeedback",
+	TouchableNativeFeedback: "TouchableNativeFeedback",
+	Image: "Image",
+	ImageBackground: "ImageBackground",
+	Switch: "Switch",
+	ActivityIndicator: "ActivityIndicator",
+	Button: "Button",
+	RefreshControl: "RefreshControl",
+	KeyboardAvoidingView: "KeyboardAvoidingView",
+	Modal: "Modal",
+	SafeAreaView: "SafeAreaView",
+	SectionList: "SectionList",
+	VirtualizedList: "VirtualizedList",
+	StyleSheet: {
+		absoluteFill: {
+			position: "absolute",
+			left: 0,
+			right: 0,
+			top: 0,
+			bottom: 0,
+		},
+		create: (styles: unknown) => styles,
+	},
 	// Constructed unconditionally by reanimated.ts's useAnimatedClassName for
 	// every InteractiveStyled instance, animated or not (see the `!recipe.name`
 	// early-return there) — needed even for a non-animated interactive test.
@@ -40,6 +68,7 @@ mock.module("react-native", () => ({
 		},
 		loop: () => ({ start: () => {}, stop: () => {} }),
 		timing: () => ({ start: () => {}, stop: () => {} }),
+		View: "Animated.View",
 	},
 	Easing: {
 		linear: "linear",
@@ -47,6 +76,7 @@ mock.module("react-native", () => ({
 		out: (fn: unknown) => fn,
 		inOut: (fn: unknown) => fn,
 		ease: "ease",
+		cubic: "cubic",
 	},
 }));
 
@@ -83,7 +113,8 @@ function render(element: React.ReactElement) {
 // since all three receive that prop. Query by host type instead: there is
 // exactly one "View" per test tree here.
 function findView(renderer: TestRenderer.ReactTestRenderer) {
-	return renderer.root.findByType("View" as unknown as React.ComponentType);
+	const box = renderer.root.findByType(Box);
+	return box.findByType("View" as unknown as React.ComponentType);
 }
 
 describe("styled() render shapes", () => {

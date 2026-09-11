@@ -1,41 +1,208 @@
-import { classNameContextNeeds } from "nitro-wind-core";
+import { type StyleContext, classNameContextNeeds } from "nitro-wind-core";
 import { type ComponentType, forwardRef, useCallback, useState } from "react";
 import { Pressable, type StyleProp, type ViewStyle } from "react-native";
+import {
+	classToColor,
+	classToStyle,
+	isClassProperty,
+	isColorClassProperty,
+	resolveAccentColorFromStyle,
+} from "./accents";
 import { computeStyle } from "./engine";
-import { GroupProvider, type GroupState, InteractionProvider } from "./provider";
-import { useAnimatedClassName } from "./reanimated";
+import {
+	GroupProvider,
+	type GroupState,
+	InteractionProvider,
+	useNitroWindStore,
+} from "./provider";
+import {
+	buildReanimatedProps,
+	getOrCreateAnimatedComponent,
+	useAnimatedClassName,
+} from "./reanimated";
 import { useStyle } from "./useStyle";
 
 type ClassNameProps = {
 	className?: string;
 	style?: StyleProp<ViewStyle>;
+	entering?: unknown;
+	exiting?: unknown;
+	layout?: unknown;
+	[key: string]: unknown;
 };
 
+function resolveExtraProps(
+	props: Record<string, unknown>,
+	context?: Partial<StyleContext>,
+): Record<string, unknown> {
+	const out: Record<string, unknown> = {};
+
+	for (const key in props) {
+		if (!key.endsWith("ClassName") || key === "className") continue;
+		const val = props[key];
+		if (typeof val !== "string" || !val.trim()) continue;
+
+		if (key === "trackColorOnClassName") {
+			const resolved = computeStyle(val, context);
+			const color = resolveAccentColorFromStyle(resolved.style);
+			if (color) {
+				const existing = (out.trackColor ?? props.trackColor) as
+					| Record<string, unknown>
+					| undefined;
+				out.trackColor = { ...existing, true: color };
+			}
+			continue;
+		}
+		if (key === "trackColorOffClassName") {
+			const resolved = computeStyle(val, context);
+			const color = resolveAccentColorFromStyle(resolved.style);
+			if (color) {
+				const existing = (out.trackColor ?? props.trackColor) as
+					| Record<string, unknown>
+					| undefined;
+				out.trackColor = { ...existing, false: color };
+			}
+			continue;
+		}
+
+		if (key === "colorsClassName") {
+			if (props.colors === undefined) {
+				const resolved = computeStyle(val, context);
+				const color = resolveAccentColorFromStyle(resolved.style);
+				if (color) {
+					out.colors = [color];
+				}
+			}
+			continue;
+		}
+
+		if (key === "endFillColorClassName") {
+			if (props.endFillColor === undefined) {
+				const resolved = computeStyle(val, context);
+				const color = resolveAccentColorFromStyle(resolved.style);
+				if (color) {
+					out.endFillColor = color;
+				}
+			}
+			continue;
+		}
+
+		if (isColorClassProperty(key)) {
+			const targetProp = classToColor(key);
+			if (props[targetProp] === undefined) {
+				const resolved = computeStyle(val, context);
+				const color = resolveAccentColorFromStyle(resolved.style);
+				if (color !== undefined) {
+					out[targetProp] = color;
+				}
+			}
+			continue;
+		}
+
+		if (isClassProperty(key)) {
+			const targetProp = classToStyle(key);
+			const resolved = computeStyle(val, context);
+			if (resolved.style) {
+				const existing = props[targetProp];
+				out[targetProp] = existing != null ? [resolved.style, existing] : resolved.style;
+			}
+			continue;
+		}
+	}
+
+	return out;
+}
+
+function computeContextNeedsForProps(props: Record<string, unknown>) {
+	let interaction = false;
+	let env = false;
+
+	for (const key in props) {
+		if (key === "className" || key.endsWith("ClassName")) {
+			const val = props[key];
+			if (typeof val === "string" && val.trim()) {
+				const needs = classNameContextNeeds(val);
+				if (needs.interaction || needs.group || needs.animation) {
+					interaction = true;
+				}
+				if (needs.colorScheme || needs.platform || needs.rtl || needs.layout) {
+					env = true;
+				}
+			}
+		}
+	}
+
+	return { interaction, env };
+}
+
+function resolveTargetAndAnimationProps<P extends object>(
+	Component: ComponentType<P>,
+	className: string | undefined,
+	props: { entering?: unknown; exiting?: unknown; layout?: unknown },
+) {
+	const reanimatedProps = buildReanimatedProps(className);
+	const entering = props.entering ?? reanimatedProps.entering;
+	const exiting = props.exiting ?? reanimatedProps.exiting;
+	const layout = props.layout ?? reanimatedProps.layout;
+	const hasAnimations = entering != null || exiting != null || layout != null;
+	const Target = hasAnimations ? getOrCreateAnimatedComponent(Component) : Component;
+	const animProps = hasAnimations
+		? {
+				...(entering != null ? { entering } : null),
+				...(exiting != null ? { exiting } : null),
+				...(layout != null ? { layout } : null),
+			}
+		: null;
+
+	return { Target, animProps };
+}
+
 export function styled<P extends object>(Component: ComponentType<P>) {
-	// Needs a real subscription (colorScheme/platform/rtl/layout, or an override)
-	// but not the interactive/animated render shape below.
 	const DynamicStyled = forwardRef<unknown, P & ClassNameProps>((props, ref) => {
-		const { className, style, ...rest } = props;
-		const resolved = useStyle(className);
+		const { className, style, entering, exiting, layout, ...rest } = props;
+		const classStr = typeof className === "string" ? className : undefined;
+		const resolved = useStyle(classStr);
 		const mergedStyle = style != null ? [resolved.style, style] : resolved.style;
-		return <Component {...(rest as P)} ref={ref} style={mergedStyle} />;
+		const env = useNitroWindStore().get();
+		const extraProps = resolveExtraProps(rest as Record<string, unknown>, env.context);
+		const { Target, animProps } = resolveTargetAndAnimationProps(Component, classStr, {
+			entering,
+			exiting,
+			layout,
+		});
+		return (
+			<Target
+				{...(rest as P)}
+				{...extraProps}
+				ref={ref}
+				style={mergedStyle}
+				{...animProps}
+			/>
+		);
 	});
 
 	const InteractiveStyled = forwardRef<unknown, P & ClassNameProps>((props, ref) => {
-		const { className, style, ...rest } = props;
+		const { className, style, entering, exiting, layout, ...rest } = props;
+		const classStr = typeof className === "string" ? className : undefined;
 		const [interaction, setInteraction] = useState({
 			pressed: false,
 			hovered: false,
 			focused: false,
 			disabled: Boolean((rest as { disabled?: boolean }).disabled),
 		});
-		const resolved = useStyle(className, interaction);
+		const resolved = useStyle(classStr, interaction);
 		const animatedStyle = useAnimatedClassName(
 			resolved.animation,
 			resolved.style as ViewStyle | undefined,
 		);
 		const mergedStyle =
 			style != null ? [animatedStyle ?? resolved.style, style] : (animatedStyle ?? resolved.style);
+
+		const env = useNitroWindStore().get();
+		const extraProps = resolveExtraProps(rest as Record<string, unknown>, {
+			...env.context,
+			...interaction,
+		});
 
 		const onPressIn = useCallback(() => setInteraction((prev) => ({ ...prev, pressed: true })), []);
 		const onPressOut = useCallback(
@@ -50,10 +217,17 @@ export function styled<P extends object>(Component: ComponentType<P>) {
 		const onFocus = useCallback(() => setInteraction((prev) => ({ ...prev, focused: true })), []);
 		const onBlur = useCallback(() => setInteraction((prev) => ({ ...prev, focused: false })), []);
 
+		const { Target, animProps } = resolveTargetAndAnimationProps(Component, classStr, {
+			entering,
+			exiting,
+			layout,
+		});
+
 		const element = (
 			<InteractionProvider value={interaction}>
-				<Component
+				<Target
 					{...(rest as P)}
+					{...extraProps}
 					ref={ref}
 					style={mergedStyle}
 					onPressIn={onPressIn}
@@ -62,11 +236,12 @@ export function styled<P extends object>(Component: ComponentType<P>) {
 					onHoverOut={onHoverOut}
 					onFocus={onFocus}
 					onBlur={onBlur}
+					{...animProps}
 				/>
 			</InteractionProvider>
 		);
 
-		if (!className || !/(?:^|\s)group(?:\s|$)/.test(className)) {
+		if (!classStr || !/(?:^|\s)group(?:\s|$)/.test(classStr)) {
 			return element;
 		}
 
@@ -79,48 +254,36 @@ export function styled<P extends object>(Component: ComponentType<P>) {
 		return <GroupProvider value={group}>{element}</GroupProvider>;
 	});
 
-	// The dispatcher itself calls zero hooks in every branch below — the two
-	// delegate branches (Dynamic/InteractiveStyled) render a *different
-	// component*, which React always treats as a safe unmount+remount
-	// regardless of how the hooks inside them differ, and the fully-static
-	// fallthrough branch calls no hook at all. That is what makes it safe to
-	// inline the former ContextFreeStyled directly here instead of delegating
-	// to a fourth component: StyledComponent's own hook count is always zero,
-	// so it can never violate the Rules of Hooks no matter how className's
-	// shape changes between renders of the same element.
-	//
-	// This used to delegate through a separate ContextFreeStyled component even
-	// for fully static classNames — two fibers where one would do. Measured on
-	// a 1000-node re-render: dispatcher+ContextFreeStyled averaged 3.66ms;
-	// inlining here averaged 2.30ms, a 37% improvement on what is the majority
-	// case for most real screens (most className usage is invariant, not
-	// interactive or context-dependent).
-	//
-	// The same trick does not extend to DynamicStyled: merging it in here too
-	// was measured and rejected — useStyle's two useSyncExternalStore calls are
-	// no-op-gated when not needed, but calling them at all (even no-op'd) costs
-	// ~30% more per render than zero hooks (2.28ms vs 2.95ms on an isolated
-	// 1000-node benchmark), which would regress the static case to pay for a
-	// hook it doesn't use. DynamicStyled stays its own component.
 	const StyledComponent = forwardRef<unknown, P & ClassNameProps>((props, ref) => {
 		const className = props.className;
-		if (!className) {
-			const { style, ...rest } = props;
-			return <Component {...(rest as P)} ref={ref} style={style} />;
-		}
+		const classStr = typeof className === "string" ? className : undefined;
+		const needs = computeContextNeedsForProps(props);
 
-		const needs = classNameContextNeeds(className);
-		if (needs.interaction || needs.group || needs.animation) {
+		if (needs.interaction) {
 			return <InteractiveStyled {...props} ref={ref} />;
 		}
-		if (needs.colorScheme || needs.platform || needs.rtl || needs.layout) {
+		if (needs.env) {
 			return <DynamicStyled {...props} ref={ref} />;
 		}
 
-		const { style, ...rest } = props;
-		const resolved = computeStyle(className);
-		const mergedStyle = style != null ? [resolved.style, style] : resolved.style;
-		return <Component {...(rest as P)} ref={ref} style={mergedStyle} />;
+		const { style, entering, exiting, layout, ...rest } = props;
+		const extraProps = resolveExtraProps(rest as Record<string, unknown>);
+		const resolved = classStr ? computeStyle(classStr) : { style: undefined };
+		const mergedStyle = style != null ? (resolved.style != null ? [resolved.style, style] : style) : resolved.style;
+		const { Target, animProps } = resolveTargetAndAnimationProps(Component, classStr, {
+			entering,
+			exiting,
+			layout,
+		});
+		return (
+			<Target
+				{...(rest as P)}
+				{...extraProps}
+				ref={ref}
+				style={mergedStyle}
+				{...animProps}
+			/>
+		);
 	});
 
 	DynamicStyled.displayName = `NitroWindDynamic(${Component.displayName ?? Component.name ?? "Component"})`;

@@ -31,6 +31,7 @@ export {
 export {
 	CONTEXT_BITS,
 	DEFAULT_STYLE_CONTEXT,
+	ThemeTransitionPreset,
 	contextBitmask,
 	type AnimationMeta,
 	type ClassToken,
@@ -39,4 +40,6 @@ export {
 	type StyleContext,
 	type StyleRecord,
 	type StyleValue,
+	type TransitionOrigin,
+	type ThemeTransitionOptions,
 } from "./types";

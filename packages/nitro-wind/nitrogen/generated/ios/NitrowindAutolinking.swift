@@ -12,5 +12,15 @@ import NitroModules
 public final class NitrowindAutolinking {
   public typealias bridge = margelo.nitro.nitrowind.bridge.swift
 
+  public static func createNativeThemeTransition() -> bridge.std__shared_ptr_HybridNativeThemeTransitionSpec_ {
+    let hybridObject = HybridNativeThemeTransition()
+    return { () -> bridge.std__shared_ptr_HybridNativeThemeTransitionSpec_ in
+      let __cxxWrapped = hybridObject.getCxxWrapper()
+      return __cxxWrapped.getCxxPart()
+    }()
+  }
   
+  public static func isNativeThemeTransitionRecyclable() -> Bool {
+    return HybridNativeThemeTransition.self is any RecyclableView.Type
+  }
 }

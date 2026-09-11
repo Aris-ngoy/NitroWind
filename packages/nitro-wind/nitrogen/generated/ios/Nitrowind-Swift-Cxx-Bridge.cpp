@@ -8,10 +8,34 @@
 #include "Nitrowind-Swift-Cxx-Bridge.hpp"
 
 // Include C++ implementation defined types
-
+#include "HybridNativeThemeTransitionSpecSwift.hpp"
+#include "Nitrowind-Swift-Cxx-Umbrella.hpp"
+#include <NitroModules/NitroDefines.hpp>
 
 namespace margelo::nitro::nitrowind::bridge::swift {
 
+  // pragma MARK: std::function<void()>
+  Func_void create_Func_void(void* NON_NULL swiftClosureWrapper) noexcept {
+    auto swiftClosure = Nitrowind::Func_void::fromUnsafe(swiftClosureWrapper);
+    return [swiftClosure = std::move(swiftClosure)]() mutable -> void {
+      swiftClosure.call();
+    };
+  }
   
+  // pragma MARK: std::shared_ptr<HybridNativeThemeTransitionSpec>
+  std::shared_ptr<HybridNativeThemeTransitionSpec> create_std__shared_ptr_HybridNativeThemeTransitionSpec_(void* NON_NULL swiftUnsafePointer) noexcept {
+    Nitrowind::HybridNativeThemeTransitionSpec_cxx swiftPart = Nitrowind::HybridNativeThemeTransitionSpec_cxx::fromUnsafe(swiftUnsafePointer);
+    return std::make_shared<margelo::nitro::nitrowind::HybridNativeThemeTransitionSpecSwift>(swiftPart);
+  }
+  void* NON_NULL get_std__shared_ptr_HybridNativeThemeTransitionSpec_(std__shared_ptr_HybridNativeThemeTransitionSpec_ cppType) {
+    std::shared_ptr<margelo::nitro::nitrowind::HybridNativeThemeTransitionSpecSwift> swiftWrapper = std::dynamic_pointer_cast<margelo::nitro::nitrowind::HybridNativeThemeTransitionSpecSwift>(cppType);
+    #ifdef NITRO_DEBUG
+    if (swiftWrapper == nullptr) [[unlikely]] {
+      throw std::runtime_error("Class \"HybridNativeThemeTransitionSpec\" is not implemented in Swift!");
+    }
+    #endif
+    Nitrowind::HybridNativeThemeTransitionSpec_cxx& swiftPart = swiftWrapper->getSwiftPart();
+    return swiftPart.toUnsafe();
+  }
 
 } // namespace margelo::nitro::nitrowind::bridge::swift

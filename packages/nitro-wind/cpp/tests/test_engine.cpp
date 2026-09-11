@@ -2,6 +2,7 @@
 #include "engine/Hash.hpp"
 #include "engine/Parser.hpp"
 #include "engine/Tokenizer.hpp"
+#include "fabric/NitroWindFabricRegistry.hpp"
 
 #include <iostream>
 #include <stdexcept>
@@ -121,6 +122,16 @@ int main() {
   schemeEngine.compute("bg-white dark:bg-black", darkCtx);
   expectEqual(schemeEngine.getCacheSize(), 2.0, "different bitmasks are distinct keys");
 
+  Engine multiThemeEngine;
+  multiThemeEngine.compute("bg-white", context);
+  expectEqual(multiThemeEngine.getCacheSize(), 1.0, "theme engine has 1 entry");
+  multiThemeEngine.setThemeName("ocean");
+  multiThemeEngine.compute("bg-white", context);
+  expectEqual(multiThemeEngine.getCacheSize(), 2.0, "theme engine retains previous theme cache entries across theme switch");
+  multiThemeEngine.setThemeName("default");
+  multiThemeEngine.compute("bg-white", context);
+  expectEqual(multiThemeEngine.getCacheSize(), 2.0, "returning to default theme hits cache without re-allocating");
+
   StyleRecord patched;
   applyUtility("p-2", patched);
   applyUtility("p-4", patched);
@@ -135,6 +146,39 @@ int main() {
 
   Engine parityEngine;
   runParityFixtures(parityEngine);
+
+  // Fabric ShadowTree Synchronizer & Commit Hook Prototype Tests
+  auto sharedEngine = std::make_shared<Engine>();
+  auto& registry = nitrowind::fabric::NitroWindFabricRegistry::shared();
+  registry.initialize(sharedEngine);
+  registry.reset();
+
+  using nitrowind::fabric::StyleDependency;
+  registry.link(101, "bg-white dark:bg-black", StyleDependency::ColorScheme);
+  registry.link(102, "p-4", StyleDependency::None);
+  registry.link(103, "bg-ocean-500", StyleDependency::Theme);
+
+  expectEqual(registry.getNodeCount(), static_cast<std::size_t>(3), "registered 3 shadow nodes");
+  expectEqual(registry.getDirtyCount(), static_cast<std::size_t>(3), "nodes start dirty upon link");
+
+  // Initial flush
+  auto flushed = registry.flush(context);
+  expectEqual(flushed, static_cast<std::size_t>(3), "initial flush updates all 3 nodes");
+  expectEqual(registry.getDirtyCount(), static_cast<std::size_t>(0), "after flush, dirty count is 0");
+
+  // Notify theme change: only nodes with Theme/ColorScheme dependencies become dirty
+  registry.notifyThemeChange("dark");
+  expectEqual(registry.getDirtyCount(), static_cast<std::size_t>(2), "only Theme/ColorScheme dependent nodes become dirty");
+
+  EngineContext darkContext = context;
+  darkContext.colorScheme = "dark";
+  flushed = registry.flush(darkContext);
+  expectEqual(flushed, static_cast<std::size_t>(2), "flush updates only the 2 dirty nodes");
+  expectEqual(registry.getDirtyCount(), static_cast<std::size_t>(0), "all nodes clean after theme commit");
+
+  // Unlink node
+  registry.unlink(102);
+  expectEqual(registry.getNodeCount(), static_cast<std::size_t>(2), "node 102 unlinked");
 
   if (failures > 0) {
     std::cerr << failures << " test(s) failed\n";

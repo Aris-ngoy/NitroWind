@@ -469,6 +469,120 @@ export const styles = StyleSheet.create({
 		color: "#ffffff",
 		fontWeight: "700",
 	},
+
+	// Animation & Transition Demo styles
+	animContainer: {
+		backgroundColor: "#020617",
+		borderRadius: 10,
+		padding: 12,
+		marginBottom: 10,
+		borderWidth: 1,
+		borderColor: "#1e293b",
+	},
+	animSectionTitle: {
+		color: "#38bdf8",
+		fontSize: 11,
+		fontWeight: "800",
+		textTransform: "uppercase",
+		letterSpacing: 0.5,
+		marginBottom: 4,
+	},
+	animHeadline: {
+		color: "#ffffff",
+		fontSize: 13,
+		fontWeight: "700",
+		marginBottom: 4,
+	},
+	animSubtext: {
+		color: "#94a3b8",
+		fontSize: 11,
+		marginBottom: 8,
+		lineHeight: 15,
+	},
+	animChipRow: {
+		flexDirection: "row",
+		flexWrap: "wrap",
+		gap: 6,
+		marginBottom: 8,
+	},
+	animChip: {
+		backgroundColor: "#1e293b",
+		borderRadius: 6,
+		paddingHorizontal: 8,
+		paddingVertical: 5,
+		borderWidth: 1,
+		borderColor: "#334155",
+	},
+	animChipActive: {
+		backgroundColor: "#0284c7",
+		borderColor: "#38bdf8",
+	},
+	animChipText: {
+		color: "#94a3b8",
+		fontSize: 10,
+		fontWeight: "600",
+	},
+	animChipTextActive: {
+		color: "#ffffff",
+		fontWeight: "700",
+	},
+	animThemeBtn: {
+		flexDirection: "row",
+		alignItems: "center",
+		backgroundColor: "#0f172a",
+		borderRadius: 8,
+		paddingHorizontal: 10,
+		paddingVertical: 6,
+		borderWidth: 1,
+		borderColor: "#334155",
+		gap: 6,
+	},
+	animThemeBtnActive: {
+		borderColor: "#38bdf8",
+		backgroundColor: "#1e293b",
+	},
+	animColorDot: {
+		width: 10,
+		height: 10,
+		borderRadius: 5,
+		borderWidth: 1,
+		borderColor: "#64748b",
+	},
+	animThemeBtnText: {
+		color: "#ffffff",
+		fontSize: 11,
+		fontWeight: "700",
+	},
+	animItemRow: {
+		flexDirection: "row",
+		alignItems: "center",
+		justifyContent: "space-between",
+		padding: 10,
+		borderRadius: 8,
+		marginBottom: 6,
+	},
+	animItemTitle: {
+		color: "#ffffff",
+		fontSize: 12,
+		fontWeight: "700",
+	},
+	animItemSubtitle: {
+		color: "rgba(255,255,255,0.75)",
+		fontSize: 9,
+		fontFamily: "monospace",
+		marginTop: 2,
+	},
+	animDeleteBtn: {
+		backgroundColor: "rgba(0,0,0,0.25)",
+		paddingHorizontal: 8,
+		paddingVertical: 4,
+		borderRadius: 6,
+	},
+	animDeleteBtnText: {
+		color: "#ffffff",
+		fontSize: 11,
+		fontWeight: "700",
+	},
 });
 
 export type CatalogStyle = ViewStyle | TextStyle | ImageStyle;
@@ -489,3 +603,74 @@ export function createItems(count = LIST_SIZE): CatalogItem[] {
 }
 
 export const CATALOG_ITEMS = createItems();
+
+export interface ThemePalette {
+	bg: string;
+	cardBg: string;
+	cardBorder: string;
+	headerBg: string;
+	text: string;
+	textSecondary: string;
+	chipBg: string;
+	chipBorder: string;
+	accent: string;
+}
+
+export const THEME_PALETTES: Record<string, ThemePalette> = {
+	dark: {
+		bg: "#09090b",
+		cardBg: "#18181b",
+		cardBorder: "#27272a",
+		headerBg: "#09090b",
+		text: "#fafafa",
+		textSecondary: "#a1a1aa",
+		chipBg: "#27272a",
+		chipBorder: "#3f3f46",
+		accent: "#38bdf8",
+	},
+	light: {
+		bg: "#f8fafc",
+		cardBg: "#ffffff",
+		cardBorder: "#e2e8f0",
+		headerBg: "#ffffff",
+		text: "#0f172a",
+		textSecondary: "#64748b",
+		chipBg: "#f1f5f9",
+		chipBorder: "#cbd5e1",
+		accent: "#0284c7",
+	},
+	coffee: {
+		bg: "#1f1610",
+		cardBg: "#2d2017",
+		cardBorder: "#443022",
+		headerBg: "#1f1610",
+		text: "#fef3c7",
+		textSecondary: "#d6c2a8",
+		chipBg: "#3a2a1e",
+		chipBorder: "#533d2c",
+		accent: "#f59e0b",
+	},
+	emerald: {
+		bg: "#022c22",
+		cardBg: "#064e3b",
+		cardBorder: "#065f46",
+		headerBg: "#022c22",
+		text: "#ecfdf5",
+		textSecondary: "#a7f3d0",
+		chipBg: "#065f46",
+		chipBorder: "#047857",
+		accent: "#10b981",
+	},
+	ocean: {
+		bg: "#082f49",
+		cardBg: "#0c4a6e",
+		cardBorder: "#075985",
+		headerBg: "#082f49",
+		text: "#f0f9ff",
+		textSecondary: "#bae6fd",
+		chipBg: "#075985",
+		chipBorder: "#0369a1",
+		accent: "#38bdf8",
+	},
+};
+

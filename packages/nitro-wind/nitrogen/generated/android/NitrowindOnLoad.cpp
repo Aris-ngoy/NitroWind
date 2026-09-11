@@ -16,6 +16,7 @@
 #include <NitroModules/HybridObjectRegistry.hpp>
 
 #include "HybridStyleEngine.hpp"
+#include "HybridNativeThemeTransition.hpp"
 
 namespace margelo::nitro::nitrowind {
 
@@ -42,6 +43,15 @@ void registerAllNatives() {
                     "The HybridObject \"HybridStyleEngine\" is not default-constructible! "
                     "Create a public constructor that takes zero arguments to be able to autolink this HybridObject.");
       return std::make_shared<HybridStyleEngine>();
+    }
+  );
+  HybridObjectRegistry::registerHybridObjectConstructor(
+    "NativeThemeTransition",
+    []() -> std::shared_ptr<HybridObject> {
+      static_assert(std::is_default_constructible_v<HybridNativeThemeTransition>,
+                    "The HybridObject \"HybridNativeThemeTransition\" is not default-constructible! "
+                    "Create a public constructor that takes zero arguments to be able to autolink this HybridObject.");
+      return std::make_shared<HybridNativeThemeTransition>();
     }
   );
 }

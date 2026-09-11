@@ -38,7 +38,7 @@
        return JavaScriptActor.assumeIsolated {
          return forwardingSwiftErrorsToJS(runtime: runtime) {
 +          let thisPtr = UnsafePointer<facebook.jsi.Value>(bitPattern: thisAddr)!
-+          let argumentsPtr = UnsafePointer<facebook.jsi.Value>(bitPattern: argumentsAddr)!
++          let argumentsPtr = UnsafePointer<facebook.jsi.Value>(bitPattern: argumentsAddr)
 +          let resultPtr = UnsafeMutablePointer<facebook.jsi.Value>(bitPattern: resultAddr)!
            let this = UnsafeMutablePointer(mutating: thisPtr).move()
            let arguments = JavaScriptValuesBuffer(runtime, start: argumentsPtr, count: argumentsCount)
@@ -60,7 +60,7 @@
      return withGuaranteedContext(context) { (context: UnownedThisHostFunctionContext, runtime) in
        return JavaScriptActor.assumeIsolated {
          return forwardingSwiftErrorsToJS(runtime: runtime) {
-+          let argumentsPtr = UnsafePointer<facebook.jsi.Value>(bitPattern: argumentsAddr)!
++          let argumentsPtr = UnsafePointer<facebook.jsi.Value>(bitPattern: argumentsAddr)
 +          let resultPtr = UnsafeMutablePointer<facebook.jsi.Value>(bitPattern: resultAddr)!
            let arguments = JavaScriptValuesBuffer(runtime, start: argumentsPtr, count: argumentsCount)
 -          let thisValue = JavaScriptUnownedValue(runtime.pointee, thisPtr)

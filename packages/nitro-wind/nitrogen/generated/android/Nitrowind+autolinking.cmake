@@ -33,6 +33,7 @@ target_sources(
   # Autolinking Setup
   ../nitrogen/generated/android/NitrowindOnLoad.cpp
   # Shared Nitrogen C++ sources
+  ../nitrogen/generated/shared/c++/HybridNativeThemeTransitionSpec.cpp
   ../nitrogen/generated/shared/c++/HybridStyleEngineSpec.cpp
   # Android-specific Nitrogen C++ sources
   

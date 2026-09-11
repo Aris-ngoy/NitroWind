@@ -1,5 +1,19 @@
-import { BarChart3, Loader2, Palette, RotateCw, Rocket, Trophy, Zap } from "lucide-react-native";
-import { computeStyle } from "nitro-wind";
+import {
+	BarChart3,
+	Loader2,
+	Palette,
+	RotateCw,
+	Rocket,
+	Sparkles,
+	Trophy,
+	Zap,
+} from "lucide-react-native";
+import {
+	ThemeTransitionPreset,
+	computeStyle,
+	styled,
+	useNitroWind,
+} from "nitro-wind";
 import {
 	Profiler,
 	type ProfilerOnRenderCallback,
@@ -12,13 +26,69 @@ import {
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { formatMs, formatOps, formatPerOp, now, runBenchmark, type BenchmarkResult } from "./bench";
-import { ITERATION_OPTIONS, LIST_SIZES, classes, createItems, styles } from "./catalog";
+import { ITERATION_OPTIONS, LIST_SIZES, THEME_PALETTES, classes, createItems, styles } from "./catalog";
 import { ENGINES, type EngineId } from "./engines";
 import { NativewindScreen } from "./engines/nativewind/Screen";
 import { NitrowindScreen } from "./engines/nitrowind/Screen";
 import { UniwindScreen } from "./engines/uniwind/Screen";
 
-type BenchView = "resolve" | "render" | "scorecard";
+type BenchView = "resolve" | "render" | "scorecard" | "animations";
+
+const AnimatedBox = styled(View);
+
+const THEME_OPTIONS = [
+	{ id: "dark", label: "Dark", bg: "#09090b" },
+	{ id: "light", label: "Light", bg: "#ffffff" },
+	{ id: "coffee", label: "Coffee", bg: "#1f1610" },
+	{ id: "emerald", label: "Emerald", bg: "#022c22" },
+	{ id: "ocean", label: "Ocean", bg: "#082f49" },
+] as const;
+
+const TRANSITION_PRESETS = [
+	{ preset: ThemeTransitionPreset.CircleCenter, name: "Circle Center" },
+	{ preset: ThemeTransitionPreset.CircleTopRight, name: "Circle Top-R" },
+	{ preset: ThemeTransitionPreset.CircleBottomLeft, name: "Circle Bot-L" },
+	{ preset: ThemeTransitionPreset.SlideRightToLeft, name: "Slide R→L" },
+	{ preset: ThemeTransitionPreset.SlideLeftToRight, name: "Slide L→R" },
+	{ preset: ThemeTransitionPreset.Fade, name: "Fade" },
+	{ preset: ThemeTransitionPreset.Blur, name: "Blur" },
+	{ preset: ThemeTransitionPreset.None, name: "Instant" },
+] as const;
+
+const DEMO_CARDS = [
+	{
+		id: "1",
+		title: "Fade In item",
+		tag: "uw-entering-fade-in",
+		className:
+			"uw-entering-fade-in uw-entering-duration-300 uw-exiting-fade-out uw-layout-linear-transition uw-layout-springify",
+		color: "#4f46e5",
+	},
+	{
+		id: "2",
+		title: "Slide In Right item",
+		tag: "uw-entering-slide-in-right",
+		className:
+			"uw-entering-slide-in-right uw-entering-duration-300 uw-exiting-fade-out uw-layout-linear-transition uw-layout-springify",
+		color: "#0284c7",
+	},
+	{
+		id: "3",
+		title: "Zoom In item",
+		tag: "uw-entering-zoom-in",
+		className:
+			"uw-entering-zoom-in uw-entering-duration-300 uw-exiting-fade-out uw-layout-linear-transition uw-layout-springify",
+		color: "#059669",
+	},
+	{
+		id: "4",
+		title: "Bounce In item",
+		tag: "nw-entering-bounce-in",
+		className:
+			"nw-entering-bounce-in nw-entering-duration-400 nw-exiting-fade-out nw-layout-linear-transition nw-layout-springify",
+		color: "#d97706",
+	},
+];
 
 interface RenderMetrics {
 	actualDuration: number;
@@ -28,10 +98,55 @@ interface RenderMetrics {
 }
 
 export default function CompareApp() {
+	const { theme, setTheme } = useNitroWind();
+	const palette = THEME_PALETTES[theme] ?? THEME_PALETTES.dark;
+	const [selectedPreset, setSelectedPreset] = useState<ThemeTransitionPreset>(
+		ThemeTransitionPreset.CircleCenter,
+	);
+	const [animCards, setAnimCards] = useState(DEMO_CARDS);
+	const nextAnimId = useRef(5);
+
 	const [engine, setEngine] = useState<EngineId>("nitrowind");
 	const [activeView, setActiveView] = useState<BenchView>("resolve");
 	const [iterations, setIterations] = useState<number>(2_000);
 	const [listCount, setListCount] = useState<number>(120);
+
+	const addAnimCard = () => {
+		const templates = [
+			{
+				title: `Slide card #${nextAnimId.current}`,
+				tag: "uw-entering-slide-in-left",
+				className:
+					"uw-entering-slide-in-left uw-entering-duration-300 uw-exiting-fade-out uw-layout-linear-transition uw-layout-springify",
+				color: "#c026d3",
+			},
+			{
+				title: `Zoom card #${nextAnimId.current}`,
+				tag: "uw-entering-zoom-in",
+				className:
+					"uw-entering-zoom-in uw-entering-duration-300 uw-exiting-fade-out uw-layout-linear-transition uw-layout-springify",
+				color: "#0891b2",
+			},
+			{
+				title: `Fade card #${nextAnimId.current}`,
+				tag: "nw-entering-fade-in",
+				className:
+					"nw-entering-fade-in nw-entering-duration-300 nw-exiting-fade-out nw-layout-linear-transition nw-layout-springify",
+				color: "#e11d48",
+			},
+		];
+		const template = templates[(nextAnimId.current - 5) % templates.length]!;
+		const newId = String(nextAnimId.current++);
+		setAnimCards((prev) => [...prev, { id: newId, ...template }]);
+	};
+
+	const removeAnimCard = (id: string) => {
+		setAnimCards((prev) => prev.filter((c) => c.id !== id));
+	};
+
+	const shuffleAnimCards = () => {
+		setAnimCards((prev) => [...prev].sort(() => Math.random() - 0.5));
+	};
 
 	// Key used to force remount for testing render performance
 	const [renderNonce, setRenderNonce] = useState(0);
@@ -195,23 +310,68 @@ export default function CompareApp() {
 	}, [renderMetrics]);
 
 	return (
-		<SafeAreaView style={styles.screen}>
+		<SafeAreaView style={[styles.screen, { backgroundColor: palette.bg }]}>
 			<ScrollView style={{ flex: 1 }}>
 				{/* Top Header */}
-				<View style={styles.header}>
-					<Text style={styles.title}>Style Engine Benchmark</Text>
-					<Text style={styles.subtitle}>
-						Benchmarking {listCount} rows & {iterations.toLocaleString()} resolves across
-						nitro-wind, NativeWind, and Uniwind. Resolve Speed only compares engines with a real
-						headless resolve function — see the Rendering tab for the rest.
-					</Text>
+				<View style={[styles.header, { backgroundColor: palette.headerBg }]}>
+					<View
+						style={{
+							flexDirection: "row",
+							justifyContent: "space-between",
+							alignItems: "flex-start",
+						}}
+					>
+						<View style={{ flex: 1, marginRight: 10 }}>
+							<Text style={[styles.title, { color: palette.text }]}>Style Engine Benchmark</Text>
+							<Text style={[styles.subtitle, { color: palette.textSecondary }]}>
+								Benchmarking {listCount} rows & {iterations.toLocaleString()} resolves across
+								nitro-wind, NativeWind, and Uniwind.
+							</Text>
+						</View>
+						<Pressable
+							style={[
+								styles.animThemeBtn,
+								{
+									paddingHorizontal: 9,
+									paddingVertical: 5,
+									backgroundColor: palette.chipBg,
+									borderColor: palette.chipBorder,
+								},
+							]}
+							onPress={() => {
+								const allThemes: Array<"dark" | "light" | "coffee" | "emerald" | "ocean"> = [
+									"dark",
+									"light",
+									"coffee",
+									"emerald",
+									"ocean",
+								];
+								const currentIndex = allThemes.indexOf(theme as any);
+								const next = allThemes[(currentIndex + 1) % allThemes.length] ?? "dark";
+								setTheme(next, {
+									preset: selectedPreset,
+									duration: 400,
+								});
+							}}
+						>
+							<View
+								style={[
+									styles.animColorDot,
+									{ backgroundColor: palette.accent, borderColor: palette.chipBorder },
+								]}
+							/>
+							<Text style={[styles.animThemeBtnText, { color: palette.text, textTransform: "capitalize" }]}>
+								{theme}
+							</Text>
+						</Pressable>
+					</View>
 				</View>
 
 				{/* Engine Tabs */}
 				<ScrollView
 					horizontal
 					showsHorizontalScrollIndicator={false}
-					contentContainerStyle={styles.tabs}
+					contentContainerStyle={[styles.tabs, { backgroundColor: palette.headerBg }]}
 				>
 					{ENGINES.map((item) => {
 						const active = item.id === engine;
@@ -243,10 +403,10 @@ export default function CompareApp() {
 				</ScrollView>
 
 				{/* Main Benchmark Dashboard Panel */}
-				<View style={styles.panel}>
+				<View style={[styles.panel, { backgroundColor: palette.bg }]}>
 					{/* Current Engine Metadata */}
 					<View style={styles.panelTopRow}>
-						<Text style={styles.panelLabel} numberOfLines={1} ellipsizeMode="tail">
+						<Text style={[styles.panelLabel, { color: palette.text }]} numberOfLines={1} ellipsizeMode="tail">
 							{meta.label} · {meta.runtime}
 						</Text>
 						{resolveWinnerId === engine ? (
@@ -279,19 +439,24 @@ export default function CompareApp() {
 							</View>
 						) : null}
 					</View>
-					<Text style={styles.panelBody}>{meta.note}</Text>
+					<Text style={[styles.panelBody, { color: palette.textSecondary }]}>{meta.note}</Text>
 
 					{/* Segmented Control for Views */}
-					<View style={styles.segmentedRow}>
+					<View style={[styles.segmentedRow, { backgroundColor: palette.bg }]}>
 						<Pressable
-							style={[styles.segmentBtn, activeView === "resolve" && styles.segmentBtnActive]}
+							style={[
+								styles.segmentBtn,
+								{ backgroundColor: palette.cardBg, borderColor: palette.cardBorder },
+								activeView === "resolve" && styles.segmentBtnActive,
+							]}
 							onPress={() => setActiveView("resolve")}
 						>
 							<View style={styles.segmentBtnRow}>
-								<Zap size={13} color={activeView === "resolve" ? "#ffffff" : "#64748b"} />
+								<Zap size={13} color={activeView === "resolve" ? "#ffffff" : palette.textSecondary} />
 								<Text
 									style={[
 										styles.segmentBtnText,
+										{ color: palette.textSecondary },
 										activeView === "resolve" && styles.segmentBtnTextActive,
 									]}
 									numberOfLines={1}
@@ -303,14 +468,19 @@ export default function CompareApp() {
 							</View>
 						</Pressable>
 						<Pressable
-							style={[styles.segmentBtn, activeView === "render" && styles.segmentBtnActive]}
+							style={[
+								styles.segmentBtn,
+								{ backgroundColor: palette.cardBg, borderColor: palette.cardBorder },
+								activeView === "render" && styles.segmentBtnActive,
+							]}
 							onPress={() => setActiveView("render")}
 						>
 							<View style={styles.segmentBtnRow}>
-								<Palette size={13} color={activeView === "render" ? "#ffffff" : "#64748b"} />
+								<Palette size={13} color={activeView === "render" ? "#ffffff" : palette.textSecondary} />
 								<Text
 									style={[
 										styles.segmentBtnText,
+										{ color: palette.textSecondary },
 										activeView === "render" && styles.segmentBtnTextActive,
 									]}
 									numberOfLines={1}
@@ -322,14 +492,19 @@ export default function CompareApp() {
 							</View>
 						</Pressable>
 						<Pressable
-							style={[styles.segmentBtn, activeView === "scorecard" && styles.segmentBtnActive]}
+							style={[
+								styles.segmentBtn,
+								{ backgroundColor: palette.cardBg, borderColor: palette.cardBorder },
+								activeView === "scorecard" && styles.segmentBtnActive,
+							]}
 							onPress={() => setActiveView("scorecard")}
 						>
 							<View style={styles.segmentBtnRow}>
-								<BarChart3 size={13} color={activeView === "scorecard" ? "#ffffff" : "#64748b"} />
+								<BarChart3 size={13} color={activeView === "scorecard" ? "#ffffff" : palette.textSecondary} />
 								<Text
 									style={[
 										styles.segmentBtnText,
+										{ color: palette.textSecondary },
 										activeView === "scorecard" && styles.segmentBtnTextActive,
 									]}
 									numberOfLines={1}
@@ -337,6 +512,30 @@ export default function CompareApp() {
 									minimumFontScale={0.85}
 								>
 									Scorecard
+								</Text>
+							</View>
+						</Pressable>
+						<Pressable
+							style={[
+								styles.segmentBtn,
+								{ backgroundColor: palette.cardBg, borderColor: palette.cardBorder },
+								activeView === "animations" && styles.segmentBtnActive,
+							]}
+							onPress={() => setActiveView("animations")}
+						>
+							<View style={styles.segmentBtnRow}>
+								<Sparkles size={13} color={activeView === "animations" ? "#ffffff" : palette.textSecondary} />
+								<Text
+									style={[
+										styles.segmentBtnText,
+										{ color: palette.textSecondary },
+										activeView === "animations" && styles.segmentBtnTextActive,
+									]}
+									numberOfLines={1}
+									adjustsFontSizeToFit
+									minimumFontScale={0.85}
+								>
+									Animations
 								</Text>
 							</View>
 						</Pressable>
@@ -407,26 +606,32 @@ export default function CompareApp() {
 							{/* Metric cards for current engine */}
 							<View style={styles.metricsGrid}>
 								<View
-									style={[styles.metricCard, resolveWinnerId === engine && styles.metricCardWinner]}
+									style={[
+										styles.metricCard,
+										{ backgroundColor: palette.cardBg, borderColor: palette.cardBorder },
+										resolveWinnerId === engine && styles.metricCardWinner,
+									]}
 								>
 									<View style={styles.metricCardHeader}>
 										<Text
 											style={
 												resolveWinnerId === engine
 													? styles.metricCardTitleWinner
-													: styles.metricCardTitle
+													: [styles.metricCardTitle, { color: palette.textSecondary }]
 											}
 										>
 											Total Time
 										</Text>
 										{resolveWinnerId === engine ? <Trophy size={14} color="#facc15" /> : null}
 									</View>
-									<Text style={styles.metricCardValue}>
+									<Text style={[styles.metricCardValue, { color: palette.text }]}>
 										{formatMs(resolveResults[engine]?.totalMs)}
 									</Text>
 									<Text
 										style={
-											resolveWinnerId === engine ? styles.metricCardSubWinner : styles.metricCardSub
+											resolveWinnerId === engine
+												? styles.metricCardSubWinner
+												: [styles.metricCardSub, { color: palette.textSecondary }]
 										}
 									>
 										for {iterations.toLocaleString()} resolves
@@ -434,25 +639,31 @@ export default function CompareApp() {
 								</View>
 
 								<View
-									style={[styles.metricCard, resolveWinnerId === engine && styles.metricCardWinner]}
+									style={[
+										styles.metricCard,
+										{ backgroundColor: palette.cardBg, borderColor: palette.cardBorder },
+										resolveWinnerId === engine && styles.metricCardWinner,
+									]}
 								>
 									<View style={styles.metricCardHeader}>
 										<Text
 											style={
 												resolveWinnerId === engine
 													? styles.metricCardTitleWinner
-													: styles.metricCardTitle
+													: [styles.metricCardTitle, { color: palette.textSecondary }]
 											}
 										>
 											Speed
 										</Text>
 									</View>
-									<Text style={styles.metricCardValue}>
+									<Text style={[styles.metricCardValue, { color: palette.text }]}>
 										{formatOps(resolveResults[engine]?.opsPerSec)}
 									</Text>
 									<Text
 										style={
-											resolveWinnerId === engine ? styles.metricCardSubWinner : styles.metricCardSub
+											resolveWinnerId === engine
+												? styles.metricCardSubWinner
+												: [styles.metricCardSub, { color: palette.textSecondary }]
 										}
 									>
 										{formatPerOp(resolveResults[engine]?.usPerOp)}
@@ -478,26 +689,32 @@ export default function CompareApp() {
 							{/* Rendering Metrics Grid */}
 							<View style={styles.metricsGrid}>
 								<View
-									style={[styles.metricCard, renderWinnerId === engine && styles.metricCardWinner]}
+									style={[
+										styles.metricCard,
+										{ backgroundColor: palette.cardBg, borderColor: palette.cardBorder },
+										renderWinnerId === engine && styles.metricCardWinner,
+									]}
 								>
 									<View style={styles.metricCardHeader}>
 										<Text
 											style={
 												renderWinnerId === engine
 													? styles.metricCardTitleWinner
-													: styles.metricCardTitle
+													: [styles.metricCardTitle, { color: palette.textSecondary }]
 											}
 										>
 											Layout Paint
 										</Text>
 										{renderWinnerId === engine ? <Trophy size={14} color="#facc15" /> : null}
 									</View>
-									<Text style={styles.metricCardValue}>
+									<Text style={[styles.metricCardValue, { color: palette.text }]}>
 										{formatMs(renderMetrics[engine]?.paintMs)}
 									</Text>
 									<Text
 										style={
-											renderWinnerId === engine ? styles.metricCardSubWinner : styles.metricCardSub
+											renderWinnerId === engine
+												? styles.metricCardSubWinner
+												: [styles.metricCardSub, { color: palette.textSecondary }]
 										}
 									>
 										{renderMetrics[engine]?.paintMs
@@ -506,33 +723,33 @@ export default function CompareApp() {
 									</Text>
 								</View>
 
-								<View style={styles.metricCard}>
+								<View style={[styles.metricCard, { backgroundColor: palette.cardBg, borderColor: palette.cardBorder }]}>
 									<View style={styles.metricCardHeader}>
-										<Text style={styles.metricCardTitle}>React Render</Text>
+										<Text style={[styles.metricCardTitle, { color: palette.textSecondary }]}>React Render</Text>
 									</View>
-									<Text style={styles.metricCardValue}>
+									<Text style={[styles.metricCardValue, { color: palette.text }]}>
 										{formatMs(renderMetrics[engine]?.actualDuration)}
 									</Text>
-									<Text style={styles.metricCardSub}>
+									<Text style={[styles.metricCardSub, { color: palette.textSecondary }]}>
 										base: {formatMs(renderMetrics[engine]?.baseDuration)}
 									</Text>
 								</View>
 
-								<View style={styles.metricCard}>
+								<View style={[styles.metricCard, { backgroundColor: palette.cardBg, borderColor: palette.cardBorder }]}>
 									<View style={styles.metricCardHeader}>
-										<Text style={styles.metricCardTitle}>Commits</Text>
+										<Text style={[styles.metricCardTitle, { color: palette.textSecondary }]}>Commits</Text>
 									</View>
-									<Text style={styles.metricCardValue}>
+									<Text style={[styles.metricCardValue, { color: palette.text }]}>
 										{renderMetrics[engine]?.renderCount ?? 0}×
 									</Text>
-									<Text style={styles.metricCardSub}>Profiler updates</Text>
+									<Text style={[styles.metricCardSub, { color: palette.textSecondary }]}>Profiler updates</Text>
 								</View>
 							</View>
 
 							{/* Relative Render Time Comparison */}
-							<View style={styles.chartContainer}>
+							<View style={[styles.chartContainer, { backgroundColor: palette.cardBg, borderColor: palette.cardBorder }]}>
 								<View style={styles.chartTitleRow}>
-									<Text style={styles.chartTitle}>List Layout Paint ({listCount} rows)</Text>
+									<Text style={[styles.chartTitle, { color: palette.text }]}>List Layout Paint ({listCount} rows)</Text>
 									<Text style={[styles.chartTitle, { color: "#4ade80" }]}>Lower is faster</Text>
 								</View>
 								{ENGINES.map((item) => {
@@ -557,7 +774,7 @@ export default function CompareApp() {
 													<Text
 														style={[
 															isWinner ? styles.chartRowLabelWinner : styles.chartRowLabel,
-															isWinner && { color: "#ffffff", fontWeight: "800" },
+															isWinner ? { color: "#ffffff", fontWeight: "800" } : { color: palette.textSecondary },
 														]}
 														numberOfLines={1}
 														ellipsizeMode="tail"
@@ -567,18 +784,18 @@ export default function CompareApp() {
 													{isWinner ? <Trophy size={12} color="#facc15" /> : null}
 												</View>
 												<Text
-													style={[styles.chartRowValue, isWinner && { color: "#ffffff" }]}
+													style={[styles.chartRowValue, isWinner ? { color: "#ffffff" } : { color: palette.text }]}
 													numberOfLines={1}
 												>
 													{formatMs(paint)}
 												</Text>
 											</View>
-											<View style={[styles.barTrack, isWinner && { backgroundColor: "#14532d" }]}>
+											<View style={[styles.barTrack, { backgroundColor: palette.chipBg }, isWinner && { backgroundColor: "#14532d" }]}>
 												<View
 													style={[
 														isWinner
 															? [styles.barFillWinner, { backgroundColor: "#ffffff" }]
-															: styles.barFill,
+															: [styles.barFill, { backgroundColor: palette.accent }],
 														{ width: `${paint ? Math.max(ratio, 8) : 0}%` },
 													]}
 												/>
@@ -602,9 +819,9 @@ export default function CompareApp() {
 
 					{/* VIEW 3: HEAD-TO-HEAD SCORECARD */}
 					{activeView === "scorecard" ? (
-						<View style={styles.chartContainer}>
+						<View style={[styles.chartContainer, { backgroundColor: palette.cardBg, borderColor: palette.cardBorder }]}>
 							<View style={styles.chartTitleRow}>
-								<Text style={styles.chartTitle}>Engine Performance Scorecard</Text>
+								<Text style={[styles.chartTitle, { color: palette.text }]}>Engine Performance Scorecard</Text>
 							</View>
 
 							{ENGINES.map((item) => {
@@ -628,11 +845,11 @@ export default function CompareApp() {
 										style={[
 											styles.chartRow,
 											{
-												backgroundColor: isAnyWinner ? "#16a34a" : "#0f172a",
+												backgroundColor: isAnyWinner ? "#16a34a" : palette.chipBg,
 												padding: 10,
 												borderRadius: 8,
 												borderWidth: 1,
-												borderColor: isAnyWinner ? "#4ade80" : "#1e293b",
+												borderColor: isAnyWinner ? "#4ade80" : palette.chipBorder,
 											},
 										]}
 									>
@@ -642,7 +859,7 @@ export default function CompareApp() {
 												<Text
 													style={[
 														isAnyWinner ? styles.chartRowLabelWinner : styles.chartRowLabel,
-														isAnyWinner && { color: "#ffffff", fontWeight: "800", fontSize: 13 },
+														isAnyWinner ? { color: "#ffffff", fontWeight: "800", fontSize: 13 } : { color: palette.text },
 													]}
 													numberOfLines={1}
 													ellipsizeMode="tail"
@@ -652,7 +869,9 @@ export default function CompareApp() {
 											</View>
 											<Text
 												style={
-													isAnyWinner ? styles.scorecardRuntimeWinner : styles.scorecardRuntime
+													isAnyWinner
+														? styles.scorecardRuntimeWinner
+														: [styles.scorecardRuntime, { color: palette.textSecondary }]
 												}
 												numberOfLines={1}
 												ellipsizeMode="tail"
@@ -661,15 +880,15 @@ export default function CompareApp() {
 											</Text>
 										</View>
 										<View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-											<Text style={{ color: isAnyWinner ? "#dcfce7" : "#94a3b8", fontSize: 11 }}>
+											<Text style={{ color: isAnyWinner ? "#dcfce7" : palette.textSecondary, fontSize: 11 }}>
 												Resolve:{" "}
-												<Text style={{ color: "#ffffff", fontWeight: "700" }}>
+												<Text style={{ color: isAnyWinner ? "#ffffff" : palette.text, fontWeight: "700" }}>
 													{formatMs(res?.totalMs)} ({formatOps(res?.opsPerSec)})
 												</Text>
 											</Text>
-											<Text style={{ color: isAnyWinner ? "#dcfce7" : "#94a3b8", fontSize: 11 }}>
+											<Text style={{ color: isAnyWinner ? "#dcfce7" : palette.textSecondary, fontSize: 11 }}>
 												Paint:{" "}
-												<Text style={{ color: "#ffffff", fontWeight: "700" }}>
+												<Text style={{ color: isAnyWinner ? "#ffffff" : palette.text, fontWeight: "700" }}>
 													{formatMs(ren?.paintMs)}
 												</Text>
 											</Text>
@@ -677,6 +896,141 @@ export default function CompareApp() {
 									</View>
 								);
 							})}
+						</View>
+					) : null}
+
+					{/* VIEW 4: ANIMATIONS & TRANSITIONS */}
+					{activeView === "animations" ? (
+						<View>
+							{/* Theme Transitions Demo */}
+							<View style={[styles.animContainer, { backgroundColor: palette.cardBg, borderColor: palette.cardBorder }]}>
+								<Text style={[styles.animSectionTitle, { color: palette.accent }]}>Theme Transition Presets</Text>
+								<Text style={[styles.animHeadline, { color: palette.text }]}>
+									Animated Theme Transitions (Active:{" "}
+									<Text style={{ color: palette.accent }}>{theme}</Text>)
+								</Text>
+								<Text style={[styles.animSubtext, { color: palette.textSecondary }]}>
+									Select a preset, then tap any theme to trigger a smooth native overlay or web
+									view transition.
+								</Text>
+
+								<Text style={[styles.subControlLabel, { color: palette.textSecondary, marginBottom: 6 }]}>
+									Transition Preset:
+								</Text>
+								<View style={styles.animChipRow}>
+									{TRANSITION_PRESETS.map((p) => {
+										const isSelected = selectedPreset === p.preset;
+										return (
+											<Pressable
+												key={p.name}
+												style={[
+													styles.animChip,
+													{ backgroundColor: palette.chipBg, borderColor: palette.chipBorder },
+													isSelected && { backgroundColor: palette.accent, borderColor: palette.accent },
+												]}
+												onPress={() => setSelectedPreset(p.preset)}
+											>
+												<Text
+													style={[
+														styles.animChipText,
+														{ color: palette.textSecondary },
+														isSelected && { color: "#ffffff", fontWeight: "700" },
+													]}
+												>
+													{p.name}
+												</Text>
+											</Pressable>
+										);
+									})}
+								</View>
+
+								<Text style={[styles.subControlLabel, { color: palette.textSecondary, marginBottom: 6 }]}>
+									Switch Theme:
+								</Text>
+								<View style={styles.animChipRow}>
+									{THEME_OPTIONS.map((t) => {
+										const isActive = theme === t.id;
+										return (
+											<Pressable
+												key={t.id}
+												style={[
+													styles.animThemeBtn,
+													{ backgroundColor: palette.chipBg, borderColor: palette.chipBorder },
+													isActive && { borderColor: palette.accent, backgroundColor: palette.cardBg },
+												]}
+												onPress={() =>
+													setTheme(t.id, { preset: selectedPreset, duration: 400 })
+												}
+											>
+												<View
+													style={[
+														styles.animColorDot,
+														{
+															backgroundColor: t.bg,
+															borderColor: isActive ? palette.accent : "#64748b",
+															borderWidth: isActive ? 2 : 1,
+														},
+													]}
+												/>
+												<Text style={[styles.animThemeBtnText, { color: palette.text }]}>{t.label}</Text>
+											</Pressable>
+										);
+									})}
+								</View>
+							</View>
+
+							{/* Reanimated ClassName Animations */}
+							<View style={[styles.animContainer, { backgroundColor: palette.cardBg, borderColor: palette.cardBorder }]}>
+								<Text style={[styles.animSectionTitle, { color: palette.accent }]}>Reanimated ClassName Animations</Text>
+								<Text style={[styles.animHeadline, { color: palette.text }]}>
+									Entering, Exiting & Layout Spring Transitions
+								</Text>
+								<Text style={[styles.animSubtext, { color: palette.textSecondary }]}>
+									Parsed dynamically from className tokens (`uw-*` & `nw-*`) and attached to
+									Reanimated components with spring physics.
+								</Text>
+
+								{/* Control Buttons */}
+								<View style={[styles.controlsRow, { marginBottom: 10 }]}>
+									<Pressable style={styles.btnAction} onPress={addAnimCard}>
+										<Text style={styles.btnActionText}>+ Add Card</Text>
+									</Pressable>
+									<Pressable
+										style={[styles.btnActionSecondary, { backgroundColor: palette.chipBg, borderColor: palette.chipBorder }]}
+										onPress={shuffleAnimCards}
+									>
+										<Text style={[styles.btnActionTextSecondary, { color: palette.text }]}>🔀 Reorder</Text>
+									</Pressable>
+									<Pressable
+										style={[styles.btnActionSecondary, { backgroundColor: palette.chipBg, borderColor: palette.chipBorder, flex: 0.6 }]}
+										onPress={() => setAnimCards(DEMO_CARDS)}
+									>
+										<Text style={[styles.btnActionTextSecondary, { color: palette.text }]}>Reset</Text>
+									</Pressable>
+								</View>
+
+								{/* Animated Cards */}
+								<View>
+									{animCards.map((card) => (
+										<AnimatedBox
+											key={card.id}
+											style={[{ backgroundColor: card.color }, styles.animItemRow]}
+											className={card.className}
+										>
+											<View style={{ flex: 1, marginRight: 8 }}>
+												<Text style={styles.animItemTitle}>{card.title}</Text>
+												<Text style={styles.animItemSubtitle}>{card.tag}</Text>
+											</View>
+											<Pressable
+												style={styles.animDeleteBtn}
+												onPress={() => removeAnimCard(card.id)}
+											>
+												<Text style={styles.animDeleteBtnText}>✕</Text>
+											</Pressable>
+										</AnimatedBox>
+									))}
+								</View>
+							</View>
 						</View>
 					) : null}
 
@@ -692,26 +1046,34 @@ export default function CompareApp() {
 								{isAutoTesting ? "Running..." : "Benchmark All"}
 							</Text>
 						</Pressable>
-						<Pressable style={styles.btnActionSecondary} onPress={testRemount}>
-							<RotateCw size={14} color="#cbd5e1" />
-							<Text style={styles.btnActionTextSecondary}>Re-render Screen</Text>
+						<Pressable
+							style={[styles.btnActionSecondary, { backgroundColor: palette.chipBg, borderColor: palette.chipBorder }]}
+							onPress={testRemount}
+						>
+							<RotateCw size={14} color={palette.textSecondary} />
+							<Text style={[styles.btnActionTextSecondary, { color: palette.text }]}>Re-render Screen</Text>
 						</Pressable>
 					</View>
 
 					{/* Config Selectors: Iterations & Row Count */}
-					<View style={styles.subControlRow}>
+					<View style={[styles.subControlRow, { borderTopColor: palette.cardBorder }]}>
 						<View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-							<Text style={styles.subControlLabel}>Resolves:</Text>
-							<View style={styles.miniSelector}>
+							<Text style={[styles.subControlLabel, { color: palette.textSecondary }]}>Resolves:</Text>
+							<View style={[styles.miniSelector, { backgroundColor: palette.bg }]}>
 								{ITERATION_OPTIONS.map((val) => (
 									<Pressable
 										key={val}
-										style={[styles.miniOption, iterations === val && styles.miniOptionActive]}
+										style={[
+											styles.miniOption,
+											iterations === val && { backgroundColor: palette.accent },
+										]}
 										onPress={() => setIterations(val)}
 									>
 										<Text
 											style={
-												iterations === val ? styles.miniOptionTextActive : styles.miniOptionText
+												iterations === val
+													? styles.miniOptionTextActive
+													: [styles.miniOptionText, { color: palette.textSecondary }]
 											}
 										>
 											{val >= 1000 ? `${val / 1000}k` : val}
@@ -722,12 +1084,15 @@ export default function CompareApp() {
 						</View>
 
 						<View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-							<Text style={styles.subControlLabel}>Rows:</Text>
-							<View style={styles.miniSelector}>
+							<Text style={[styles.subControlLabel, { color: palette.textSecondary }]}>Rows:</Text>
+							<View style={[styles.miniSelector, { backgroundColor: palette.bg }]}>
 								{LIST_SIZES.map((val) => (
 									<Pressable
 										key={val}
-										style={[styles.miniOption, listCount === val && styles.miniOptionActive]}
+										style={[
+											styles.miniOption,
+											listCount === val && { backgroundColor: palette.accent },
+										]}
 										onPress={() => {
 											paintStart.current = now();
 											setListCount(val);
@@ -735,7 +1100,9 @@ export default function CompareApp() {
 									>
 										<Text
 											style={
-												listCount === val ? styles.miniOptionTextActive : styles.miniOptionText
+												listCount === val
+													? styles.miniOptionTextActive
+													: [styles.miniOptionText, { color: palette.textSecondary }]
 											}
 										>
 											{val}

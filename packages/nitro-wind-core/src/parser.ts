@@ -65,6 +65,7 @@ const COLOR_PROPS: Record<string, string> = {
 	tint: "tintColor",
 	shadow: "shadowColor",
 	decoration: "textDecorationColor",
+	accent: "accentColor",
 };
 
 const EXACT: Record<string, StyleRecord> = {

@@ -7,10 +7,11 @@
 
 #import <Foundation/Foundation.h>
 #import <NitroModules/HybridObjectRegistry.hpp>
-
+#import "Nitrowind-Swift-Cxx-Umbrella.hpp"
 #import <type_traits>
 
 #include "HybridStyleEngine.hpp"
+#include "HybridNativeThemeTransitionSpecSwift.hpp"
 
 @interface NitrowindAutolinking : NSObject
 @end
@@ -28,6 +29,13 @@
                     "The HybridObject \"HybridStyleEngine\" is not default-constructible! "
                     "Create a public constructor that takes zero arguments to be able to autolink this HybridObject.");
       return std::make_shared<HybridStyleEngine>();
+    }
+  );
+  HybridObjectRegistry::registerHybridObjectConstructor(
+    "NativeThemeTransition",
+    []() -> std::shared_ptr<HybridObject> {
+      std::shared_ptr<HybridNativeThemeTransitionSpec> hybridObject = Nitrowind::NitrowindAutolinking::createNativeThemeTransition();
+      return hybridObject;
     }
   );
 }

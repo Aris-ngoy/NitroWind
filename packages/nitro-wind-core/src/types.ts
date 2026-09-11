@@ -1,5 +1,34 @@
-export type ColorScheme = "light" | "dark";
+export type ColorScheme = "light" | "dark" | (string & {});
 export type PlatformName = "ios" | "android" | "web";
+
+export enum ThemeTransitionPreset {
+	None = 0,
+	Fade = 1,
+	SlideRightToLeft = 2,
+	SlideLeftToRight = 3,
+	CircleTopRight = 4,
+	CircleTopLeft = 5,
+	CircleBottomRight = 6,
+	CircleBottomLeft = 7,
+	CircleCenter = 8,
+	Blur = 9,
+	BlurRightToLeft = 10,
+	BlurLeftToRight = 11,
+	CircleFromOrigin = 12,
+	SlideFromOrigin = 13,
+	BlurFromOrigin = 14,
+}
+
+export interface TransitionOrigin {
+	x: number;
+	y: number;
+}
+
+export interface ThemeTransitionOptions {
+	preset?: ThemeTransitionPreset;
+	duration?: number;
+	origin?: TransitionOrigin;
+}
 
 export interface StyleContext {
 	colorScheme: ColorScheme;

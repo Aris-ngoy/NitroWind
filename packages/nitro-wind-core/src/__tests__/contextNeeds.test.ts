@@ -38,8 +38,16 @@ describe("classNameContextNeeds", () => {
 		expect(classNameContextNeeds("animate-spin").animation).toBe(true);
 		expect(classNameContextNeeds("transition").animation).toBe(true);
 		expect(classNameContextNeeds("transition-colors").animation).toBe(true);
+		expect(classNameContextNeeds("uw-entering-fade-in").animation).toBe(true);
+		expect(classNameContextNeeds("uw-exiting-fade-out").animation).toBe(true);
+		expect(classNameContextNeeds("uw-layout-linear-transition").animation).toBe(true);
+		expect(classNameContextNeeds("nw-entering-slide-in-left").animation).toBe(true);
+		expect(classNameContextNeeds("nw-exiting-slide-out-right").animation).toBe(true);
+		expect(classNameContextNeeds("nw-layout-jumping-transition").animation).toBe(true);
 		expect(classNameContextNeeds("p-4 bg-red-500").animation).toBe(false);
 		expect(classNameIsContextFree("animate-spin")).toBe(false);
+		expect(classNameIsContextFree("uw-entering-fade-in")).toBe(false);
+		expect(classNameIsContextFree("nw-layout-linear-transition")).toBe(false);
 	});
 
 	test("duration-*/ease-* alone do not require the interactive render shape", () => {

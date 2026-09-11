@@ -19,6 +19,7 @@ public:
 private:
   StyleCache cache_;
   std::string themeName_ = "default";
+  uint64_t themeHash_ = 0;
   bool hasLast_ = false;
   uint64_t lastKey_ = 0;
   StyleResult lastResult_;

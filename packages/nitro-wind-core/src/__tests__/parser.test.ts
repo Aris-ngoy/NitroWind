@@ -26,6 +26,18 @@ describe("resolveUtility", () => {
 			backgroundColor: "rgba(239,68,68,0.5)",
 		});
 	});
+
+	test("resolves accent color utilities", () => {
+		expect(resolveUtility("accent-red-500")).toEqual({
+			accentColor: "#ef4444",
+		});
+		expect(resolveUtility("accent-blue-600")).toEqual({
+			accentColor: "#2563eb",
+		});
+		expect(resolveUtility("accent-[#ffaa00]")).toEqual({
+			accentColor: "#ffaa00",
+		});
+	});
 });
 
 describe("parseClassName", () => {

@@ -35,7 +35,18 @@ function isAotCompilableClassName(className) {
 	if (!className) return false;
 	if (hasBareColon(className)) return false;
 	if (/(?:^|\s)group(?:\s|$)/.test(className)) return false;
-	if (className.includes("animate-") || className.includes("transition")) return false;
+	if (
+		className.includes("animate-") ||
+		className.includes("transition") ||
+		className.includes("nw-entering") ||
+		className.includes("nw-exiting") ||
+		className.includes("nw-layout") ||
+		className.includes("uw-entering") ||
+		className.includes("uw-exiting") ||
+		className.includes("uw-layout")
+	) {
+		return false;
+	}
 	return true;
 }
 
@@ -78,7 +89,18 @@ function tokenizeClassName(className) {
 function platformOnlyVariantEligible(className) {
 	if (!className) return false;
 	if (/(?:^|\s)group(?:\s|$)/.test(className)) return false;
-	if (className.includes("animate-") || className.includes("transition")) return false;
+	if (
+		className.includes("animate-") ||
+		className.includes("transition") ||
+		className.includes("nw-entering") ||
+		className.includes("nw-exiting") ||
+		className.includes("nw-layout") ||
+		className.includes("uw-entering") ||
+		className.includes("uw-exiting") ||
+		className.includes("uw-layout")
+	) {
+		return false;
+	}
 	let hasPlatformVariant = false;
 	for (const token of tokenizeClassName(className)) {
 		for (const variant of token.variants) {

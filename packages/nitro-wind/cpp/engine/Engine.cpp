@@ -6,7 +6,7 @@
 namespace nitrowind::engine {
 
 StyleResult Engine::compute(const std::string& className, const EngineContext& context) {
-  const uint64_t key = cacheKey(className, contextBitmask(context));
+  const uint64_t key = cacheKey(className, contextBitmask(context), themeHash_);
   if (hasLast_ && key == lastKey_) {
     return lastResult_;
   }
@@ -39,7 +39,7 @@ std::vector<StyleResult> Engine::computeBatch(const std::vector<std::string>& cl
 void Engine::setThemeName(const std::string& name) {
   if (name == themeName_) return;
   themeName_ = name;
-  cache_.clear();
+  themeHash_ = (name.empty() || name == "default") ? 0 : fnv1a64(name);
   hasLast_ = false;
   lastKey_ = 0;
   lastResult_ = {};
