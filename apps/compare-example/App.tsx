@@ -3,6 +3,7 @@ import { NitroWindProvider } from "nitro-wind";
 import React from "react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import CompareApp from "./src/CompareApp";
+import "./global.css";
 
 export default function App() {
 	return (

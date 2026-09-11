@@ -25,20 +25,13 @@ export function mergeResolvedStyle<T extends ViewStyle | TextStyle>(
 	return [resolved as T, fallback];
 }
 
-export function resolveUniwindSync(className: string): ViewStyle | TextStyle | null {
-	try {
-		const mod = require("uniwind") as {
-			resolveClassNames?: (className: string) => ViewStyle | TextStyle;
-			getStyles?: (className: string) => ViewStyle | TextStyle;
-		};
-		if (typeof mod.resolveClassNames === "function") {
-			return mod.resolveClassNames(className);
-		}
-		if (typeof mod.getStyles === "function") {
-			return mod.getStyles(className);
-		}
-	} catch {
-		return null;
-	}
-	return null;
-}
+/**
+ * Uniwind's real public surface (`useResolveClassNames`, `useUniwind`, `Uniwind`
+ * core) has no synchronous, headless resolve function — see node_modules/uniwind/
+ * src/index.ts. There is nothing to probe: a prior version of this module tried
+ * `mod.resolveClassNames` / `mod.getStyles`, neither of which uniwind exports, so
+ * it always returned null and the benchmark that called it was timing a failed
+ * property lookup, not Uniwind. `engines/uniwind/Screen.tsx` calls the real hook
+ * directly; this flag lets the benchmark UI skip Uniwind honestly instead.
+ */
+export const UNIWIND_METRO_PIPELINE_LIVE = false;

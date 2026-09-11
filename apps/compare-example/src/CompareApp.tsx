@@ -7,8 +7,8 @@ import { ITERATION_OPTIONS, LIST_SIZES, classes, createItems, styles } from "./c
 import { ENGINES, type EngineId } from "./engines";
 import { NativewindScreen } from "./engines/nativewind/Screen";
 import { NitrowindScreen } from "./engines/nitrowind/Screen";
+import { StylesheetScreen } from "./engines/stylesheet/Screen";
 import { UniwindScreen } from "./engines/uniwind/Screen";
-import { resolveUniwindSync } from "./engines/uniwind/resolve";
 
 type BenchView = "resolve" | "render" | "scorecard";
 
@@ -86,22 +86,23 @@ export default function CompareApp() {
 		});
 	}, [engine]);
 
-	// Run resolve benchmark using multi-sample warmup benchmark runner
+	// Run resolve benchmark using multi-sample warmup benchmark runner.
+	// Only engines with a real, synchronous, headless resolve function are timed
+	// here (see EngineMeta.hasHeadlessResolve in ./engines) — NativeWind's
+	// cssInterop and Uniwind's useResolveClassNames both resolve only inside a
+	// React render, so faking a sync call for them would time something neither
+	// engine actually does. They are compared fairly in the Rendering view instead.
 	const runResolveBench = useCallback(() => {
+		const stylesheetBench = runBenchmark(iterations, () => {
+			void styles.row;
+		});
 		const nitroBench = runBenchmark(iterations, () => {
 			computeStyle(classes.row);
 		});
-		const nativewindBench = runBenchmark(iterations, () => {
-			void styles.row;
-		});
-		const uniwindBench = runBenchmark(iterations, () => {
-			void (resolveUniwindSync(classes.row) ?? styles.row);
-		});
 
 		setResolveResults({
+			stylesheet: stylesheetBench,
 			nitrowind: nitroBench,
-			nativewind: nativewindBench,
-			uniwind: uniwindBench,
 		});
 	}, [iterations]);
 
@@ -117,19 +118,25 @@ export default function CompareApp() {
 		// 1. Resolve bench
 		runResolveBench();
 
-		// 2. Measure nitrowind
+		// 2. Measure stylesheet (baseline)
+		setRenderNonce((n) => n + 1);
+		setEngine("stylesheet");
+		paintStart.current = now();
+		await new Promise((r) => setTimeout(r, 300));
+
+		// 3. Measure nitrowind
 		setRenderNonce((n) => n + 1);
 		setEngine("nitrowind");
 		paintStart.current = now();
 		await new Promise((r) => setTimeout(r, 300));
 
-		// 3. Measure nativewind
+		// 4. Measure nativewind
 		setRenderNonce((n) => n + 1);
 		setEngine("nativewind");
 		paintStart.current = now();
 		await new Promise((r) => setTimeout(r, 300));
 
-		// 4. Measure uniwind
+		// 5. Measure uniwind
 		setRenderNonce((n) => n + 1);
 		setEngine("uniwind");
 		paintStart.current = now();
@@ -191,8 +198,9 @@ export default function CompareApp() {
 			<View style={styles.header}>
 				<Text style={styles.title}>Style Engine Benchmark</Text>
 				<Text style={styles.subtitle}>
-					Benchmarking {listCount} rows & {iterations.toLocaleString()} className resolves across
-					nitro-wind, NativeWind, and Uniwind.
+					Benchmarking {listCount} rows & {iterations.toLocaleString()} resolves across StyleSheet,
+					nitro-wind, NativeWind, and Uniwind. Resolve Speed only compares engines with a real
+					headless resolve function — see the Rendering tab for the rest.
 				</Text>
 			</View>
 
@@ -588,6 +596,13 @@ export default function CompareApp() {
 			{/* Render Engine Screen inside React Profiler */}
 			<Profiler id={engine} onRender={onProfilerRender}>
 				<View style={{ flex: 1 }}>
+					{engine === "stylesheet" ? (
+						<StylesheetScreen
+							key={`sheet-${renderNonce}-${listCount}`}
+							items={items}
+							onLayout={onListLayout}
+						/>
+					) : null}
 					{engine === "nitrowind" ? (
 						<NitrowindScreen
 							key={`nitro-${renderNonce}-${listCount}`}
