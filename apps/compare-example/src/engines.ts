@@ -1,4 +1,4 @@
-export type EngineId = "stylesheet" | "nitrowind" | "nativewind" | "uniwind";
+export type EngineId = "nitrowind" | "nativewind" | "uniwind";
 
 export interface EngineMeta {
 	id: EngineId;
@@ -14,13 +14,6 @@ export interface EngineMeta {
 }
 
 export const ENGINES: EngineMeta[] = [
-	{
-		id: "stylesheet",
-		label: "StyleSheet",
-		runtime: "StyleSheet.create",
-		note: "The baseline. Styles are plain objects computed once at module load; 'resolving' one at render time is a property read.",
-		hasHeadlessResolve: true,
-	},
 	{
 		id: "nitrowind",
 		label: "nitro-wind",

@@ -44,9 +44,9 @@ export function UniwindScreen({
 				data={items}
 				keyExtractor={(item) => item.id}
 				renderItem={({ item }) => <RenderRow item={item} />}
-				initialNumToRender={40}
-				windowSize={8}
+				initialNumToRender={items.length}
 				ListFooterComponent={<View style={{ height: 1 }} onLayout={onLayout} />}
+				scrollEnabled={false}
 			/>
 		</View>
 	);
