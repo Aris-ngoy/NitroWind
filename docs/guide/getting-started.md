@@ -45,4 +45,4 @@ Then build the iOS or Android app as usual. The C++ `StyleEngine` HybridObject i
 
 - `apps/expo-example` — Expo Go / JS fallback showcase
 - `apps/bare-example` — native C++ engine on React Native 0.86
-- `apps/compare-example` — the same 120-row list and resolve bench on StyleSheet, nitro-wind, NativeWind, and Uniwind
+- `apps/compare-example` — the same 120-row list and resolve bench on nitro-wind, NativeWind, and Uniwind. NativeWind and Uniwind have no headless resolve API, so Resolve Speed only reports nitro-wind; Rendering compares all three.

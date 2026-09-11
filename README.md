@@ -16,7 +16,7 @@ packages/
 apps/
   expo-example/        Expo SDK 57 (JS fallback)
   bare-example/        React Native 0.86 (native C++ engine)
-  compare-example/     StyleSheet vs nitro-wind vs NativeWind vs Uniwind
+  compare-example/     nitro-wind vs NativeWind vs Uniwind
 benchmarks/            JS engine throughput suite
 docs/                  VitePress documentation
 ```
@@ -44,6 +44,10 @@ cd apps/bare-example && bun run ios
 cd apps/expo-example && bun run start
 cd apps/compare-example && bun run start
 ```
+
+![Resolve Speed on iPhone 17 Pro: nitro-wind at 5.41M ops/s; NativeWind and Uniwind unmeasured](apps/compare-example/benchmark-iphone17pro.png)
+
+Resolve Speed only times a synchronous, headless `className → style` call. `nitro-wind` exposes `computeStyle()`; NativeWind (`cssInterop`) and Uniwind (`useResolveClassNames`) resolve inside a React render, so they show `—` here and are compared on the Rendering tab.
 
 ## Public API
 

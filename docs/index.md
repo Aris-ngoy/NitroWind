@@ -8,4 +8,4 @@ Fully free and open source under the MIT license.
 - [Architecture](/guide/architecture)
 - [Public API](/api/)
 
-Example apps live in `apps/expo-example`, `apps/bare-example`, and `apps/compare-example` (StyleSheet vs nitro-wind vs NativeWind vs Uniwind).
+Example apps live in `apps/expo-example`, `apps/bare-example`, and `apps/compare-example` (nitro-wind vs NativeWind vs Uniwind).
