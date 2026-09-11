@@ -3,7 +3,7 @@ export {
 	jsStyleEngine,
 	type StyleResult,
 } from "./engine";
-export { StyleCache, cacheKey, fastCacheKey, fnv1a64 } from "./cache";
+export { StyleCache, fastCacheKey } from "./cache";
 export { mergeStyles } from "./inflate";
 export { parseAnimation, parseClassName, resolveUtility, variantMatches } from "./parser";
 export {

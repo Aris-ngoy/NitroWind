@@ -20,7 +20,7 @@ className string
 
 ## Caching
 
-Cache keys are 64-bit integers: `fnv1a64(className)` mixed with the context bitmask (color scheme, platform, RTL, group/interaction, width bucket). Theme is not part of the key — theme changes clear the cache.
+Cache keys are strings: `` `${bitmask}:${className}` ``, where the bitmask packs color scheme, platform, RTL, interaction/group, and a width bucket (`fastCacheKey` in `nitro-wind-core`). Theme is not part of the key — theme changes clear the cache. The engine seam's own cache sits at the className-and-bitmask granularity on both sides: `nitrowind::engine::Engine` on the C++ side, `JsStyleEngine` on the JS side. The wrappers around each (`HybridStyleEngine` on the JSI boundary, `packages/nitro-wind/src/engine.ts` on the JS side) do not layer a second cache on top — `engine.ts`'s own cache exists because it also has to skip the native-vs-JS dispatch decision on a hit, which the engine seam itself does not know about.
 
 ## React subscriptions
 

@@ -1,6 +1,5 @@
 #include "HybridStyleEngine.hpp"
 
-#include "engine/Hash.hpp"
 #include <NitroModules/AnyMap.hpp>
 
 namespace margelo::nitro::nitrowind {
@@ -74,28 +73,7 @@ StyleResult HybridStyleEngine::toNativeResult(const ::nitrowind::engine::StyleRe
 }
 
 StyleResult HybridStyleEngine::compute(const std::string& className, const StyleContext& context) {
-  const auto engineContext = toEngineContext(context);
-  const uint64_t key = ::nitrowind::engine::cacheKey(className, ::nitrowind::engine::contextBitmask(engineContext));
-  if (hasLast_ && key == lastKey_) {
-    return lastResult_;
-  }
-  const auto it = nativeCache_.find(key);
-  if (it != nativeCache_.end()) {
-    hasLast_ = true;
-    lastKey_ = key;
-    lastResult_ = it->second;
-    return lastResult_;
-  }
-
-  auto computed = toNativeResult(engine_.compute(className, engineContext));
-  if (nativeCache_.size() >= 4096) {
-    nativeCache_.clear();
-  }
-  nativeCache_[key] = computed;
-  hasLast_ = true;
-  lastKey_ = key;
-  lastResult_ = std::move(computed);
-  return lastResult_;
+  return toNativeResult(engine_.compute(className, toEngineContext(context)));
 }
 
 std::vector<StyleResult> HybridStyleEngine::computeBatch(
@@ -111,18 +89,10 @@ std::vector<StyleResult> HybridStyleEngine::computeBatch(
 
 void HybridStyleEngine::setThemeName(const std::string& name) {
   engine_.setThemeName(name);
-  nativeCache_.clear();
-  hasLast_ = false;
-  lastKey_ = 0;
-  lastResult_ = {};
 }
 
 void HybridStyleEngine::clearCache() {
   engine_.clearCache();
-  nativeCache_.clear();
-  hasLast_ = false;
-  lastKey_ = 0;
-  lastResult_ = {};
 }
 
 double HybridStyleEngine::getCacheSize() {
