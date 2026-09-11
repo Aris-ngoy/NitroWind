@@ -1,8 +1,9 @@
 import { describe, expect, test } from "bun:test";
-import { classNameIsAotCompilable } from "nitro-wind-core";
+import { classNameIsAotCompilable, classNameIsPlatformOnlyVariant } from "nitro-wind-core";
 
 const plugin = require("../../babel.js") as typeof import("../../babel.js") & {
 	isAotCompilableClassName: (className: string) => boolean;
+	platformOnlyVariantEligible: (className: string) => boolean;
 };
 
 describe("isAotCompilableClassName", () => {
@@ -67,6 +68,55 @@ describe("isAotCompilableClassName / classNameIsAotCompilable parity", () => {
 	for (const className of cases) {
 		test(`agrees on ${JSON.stringify(className)}`, () => {
 			expect(plugin.isAotCompilableClassName(className)).toBe(classNameIsAotCompilable(className));
+		});
+	}
+});
+
+describe("platformOnlyVariantEligible", () => {
+	test("accepts one or more platform variants and nothing else dynamic", () => {
+		expect(plugin.platformOnlyVariantEligible("ios:p-6")).toBe(true);
+		expect(plugin.platformOnlyVariantEligible("ios:p-6 android:p-4")).toBe(true);
+		expect(plugin.platformOnlyVariantEligible("p-2 ios:p-6 web:p-8")).toBe(true);
+	});
+
+	test("rejects a variant-free className (isAotCompilableClassName's job) and anything mixing in another axis", () => {
+		expect(plugin.platformOnlyVariantEligible("p-4 bg-red-500")).toBe(false);
+		expect(plugin.platformOnlyVariantEligible("")).toBe(false);
+		expect(plugin.platformOnlyVariantEligible("dark:ios:p-6")).toBe(false);
+		expect(plugin.platformOnlyVariantEligible("ios:p-6 md:p-8")).toBe(false);
+		expect(plugin.platformOnlyVariantEligible("ios:p-6 active:opacity-50")).toBe(false);
+		expect(plugin.platformOnlyVariantEligible("ios:p-6 group-active:text-red-500")).toBe(false);
+		expect(plugin.platformOnlyVariantEligible("ios:p-6 animate-spin")).toBe(false);
+	});
+});
+
+// Same parity mechanism as isAotCompilableClassName above, for the other
+// build-time-eligible shape this candidate added.
+describe("platformOnlyVariantEligible / classNameIsPlatformOnlyVariant parity", () => {
+	const cases = [
+		"",
+		"p-4 bg-red-500 flex-1",
+		"ios:p-6",
+		"android:p-4",
+		"web:p-8",
+		"ios:p-6 android:p-4",
+		"p-2 ios:p-6 web:p-8",
+		"dark:ios:p-6",
+		"ios:p-6 md:p-8",
+		"ios:p-6 active:opacity-50",
+		"ios:p-6 group-active:text-red-500",
+		"ios:p-6 group",
+		"ios:p-6 animate-spin",
+		"ios:p-6 transition-all",
+		"foo:p-4",
+		"ios:bg-[#ff0055]",
+	];
+
+	for (const className of cases) {
+		test(`agrees on ${JSON.stringify(className)}`, () => {
+			expect(plugin.platformOnlyVariantEligible(className)).toBe(
+				classNameIsPlatformOnlyVariant(className),
+			);
 		});
 	}
 });
@@ -200,5 +250,120 @@ export const Screen = () => (
 		// style object identifiers must also not share node reference identity
 		const distinctStyleObjects = new Set(styleObjects);
 		expect(distinctStyleObjects.size).toBe(styleObjects.length);
+	});
+});
+
+// Step 2 of the candidate-4 design pass (see the approved plan): a
+// platform-only-variant className resolves to a single value at transform
+// time when Metro reports the target platform via `caller.platform` — see
+// babel.js's own comment on how api.caller flows in from there.
+describe("nitro-wind babel plugin — platform-only variants", () => {
+	test("resolves platform-only variants at transform time when caller.platform is known", async () => {
+		const babel = await import("@babel/core");
+		const jsx = await import("@babel/plugin-syntax-jsx");
+		const result = babel.transformSync(
+			`import { View, Text } from "react-native";
+export const Row = () => (
+  <View className="p-2 ios:p-6 android:p-4">
+    <Text className="ios:text-red-500">Hi</Text>
+  </View>
+);
+`,
+			{
+				plugins: [jsx.default, plugin],
+				filename: "fixture.tsx",
+				configFile: false,
+				babelrc: false,
+				caller: { name: "metro", platform: "ios" },
+			},
+		);
+		expect(result?.code).toContain("computeStaticStyleForPlatform");
+		expect(result?.code).toContain(
+			'computeStaticStyleForPlatform("p-2 ios:p-6 android:p-4", "ios")',
+		);
+		expect(result?.code).toContain('computeStaticStyleForPlatform("ios:text-red-500", "ios")');
+		expect(result?.code).toContain("<_RNView");
+		expect(result?.code).toContain("<_RNText");
+		// Neither classNames touched here needs the zero-variant resolver.
+		expect(result?.code).not.toContain("computeStaticStyle(");
+	});
+
+	test("imports both resolvers only when a file mixes zero-variant and platform-only classNames", async () => {
+		const babel = await import("@babel/core");
+		const jsx = await import("@babel/plugin-syntax-jsx");
+		const result = babel.transformSync(
+			`import { View, Text } from "react-native";
+export const Row = () => (
+  <View className="flex-1 items-center">
+    <Text className="ios:text-red-500 android:text-blue-500">Hi</Text>
+  </View>
+);
+`,
+			{
+				plugins: [jsx.default, plugin],
+				filename: "fixture.tsx",
+				configFile: false,
+				babelrc: false,
+				caller: { name: "metro", platform: "android" },
+			},
+		);
+		expect(result?.code).toContain('computeStaticStyle("flex-1 items-center")');
+		expect(result?.code).toContain(
+			'computeStaticStyleForPlatform("ios:text-red-500 android:text-blue-500", "android")',
+		);
+		expect(result?.code).toContain("computeStaticStyle as");
+		expect(result?.code).toContain("computeStaticStyleForPlatform as");
+	});
+
+	test("falls back to the runtime path when caller reports no platform", async () => {
+		const babel = await import("@babel/core");
+		const jsx = await import("@babel/plugin-syntax-jsx");
+		const withoutCaller = babel.transformSync(
+			`import { View } from "react-native";
+export const Row = () => <View className="ios:p-6" />;
+`,
+			{
+				plugins: [jsx.default, plugin],
+				filename: "fixture.tsx",
+				configFile: false,
+				babelrc: false,
+			},
+		);
+		const withCallerNoPlatform = babel.transformSync(
+			`import { View } from "react-native";
+export const Row = () => <View className="ios:p-6" />;
+`,
+			{
+				plugins: [jsx.default, plugin],
+				filename: "fixture.tsx",
+				configFile: false,
+				babelrc: false,
+				caller: { name: "metro" },
+			},
+		);
+		for (const result of [withoutCaller, withCallerNoPlatform]) {
+			expect(result?.code).toContain('className="ios:p-6"');
+			expect(result?.code).not.toContain("computeStaticStyleForPlatform");
+			expect(result?.code).not.toContain("<_RNView");
+		}
+	});
+
+	test("does not resolve a className mixing a platform variant with any other axis", async () => {
+		const babel = await import("@babel/core");
+		const jsx = await import("@babel/plugin-syntax-jsx");
+		const result = babel.transformSync(
+			`import { View } from "react-native";
+export const Row = () => <View className="dark:ios:p-6" />;
+`,
+			{
+				plugins: [jsx.default, plugin],
+				filename: "fixture.tsx",
+				configFile: false,
+				babelrc: false,
+				caller: { name: "metro", platform: "ios" },
+			},
+		);
+		expect(result?.code).toContain('className="dark:ios:p-6"');
+		expect(result?.code).not.toContain("computeStaticStyleForPlatform");
 	});
 });

@@ -3,6 +3,7 @@ import {
 	classNameContextNeeds,
 	classNameIsAotCompilable,
 	classNameIsContextFree,
+	classNameIsPlatformOnlyVariant,
 } from "../contextNeeds";
 
 describe("classNameContextNeeds", () => {
@@ -63,5 +64,24 @@ describe("classNameContextNeeds", () => {
 		// (see the parity test in packages/nitro-wind/src/__tests__/babel.test.ts).
 		expect(classNameIsContextFree("foo:p-4")).toBe(true);
 		expect(classNameIsAotCompilable("foo:p-4")).toBe(false);
+	});
+
+	test("platform-only-variant is true for one or more platform variants and nothing else dynamic", () => {
+		expect(classNameIsPlatformOnlyVariant("ios:p-6")).toBe(true);
+		expect(classNameIsPlatformOnlyVariant("ios:p-6 android:p-4")).toBe(true);
+		expect(classNameIsPlatformOnlyVariant("p-2 ios:p-6 web:p-8")).toBe(true);
+	});
+
+	test("platform-only-variant is false for a variant-free className (that's classNameIsAotCompilable's job)", () => {
+		expect(classNameIsPlatformOnlyVariant("p-4 bg-red-500")).toBe(false);
+		expect(classNameIsPlatformOnlyVariant("")).toBe(false);
+	});
+
+	test("platform-only-variant is false when any other axis is mixed in", () => {
+		expect(classNameIsPlatformOnlyVariant("dark:ios:p-6")).toBe(false);
+		expect(classNameIsPlatformOnlyVariant("ios:p-6 md:p-8")).toBe(false);
+		expect(classNameIsPlatformOnlyVariant("ios:p-6 active:opacity-50")).toBe(false);
+		expect(classNameIsPlatformOnlyVariant("ios:p-6 group-active:text-red-500")).toBe(false);
+		expect(classNameIsPlatformOnlyVariant("ios:p-6 animate-spin")).toBe(false);
 	});
 });

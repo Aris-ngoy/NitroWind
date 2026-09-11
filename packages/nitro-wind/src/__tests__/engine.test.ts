@@ -1,5 +1,10 @@
 import { beforeEach, describe, expect, test } from "bun:test";
-import { clearEngineCache, computeStaticStyle, computeStyle } from "../engine";
+import {
+	clearEngineCache,
+	computeStaticStyle,
+	computeStaticStyleForPlatform,
+	computeStyle,
+} from "../engine";
 
 const ROW = "flex-row items-center px-4 py-3 border-b border-slate-800 bg-slate-900";
 
@@ -64,5 +69,27 @@ describe("computeStaticStyle", () => {
 		const style = computeStaticStyle("p-4 bg-red-500");
 		expect(style.padding).toBe(16);
 		expect(style.backgroundColor).toBe("#ef4444");
+	});
+});
+
+describe("computeStaticStyleForPlatform", () => {
+	test("resolves platform variants against the given platform, not the default", () => {
+		// DEFAULT_STYLE_CONTEXT.platform is "ios" -- computeStaticStyle alone
+		// would resolve this className as if targeting ios regardless of what
+		// the build actually targets. This is what lets the Babel plugin bake
+		// in the real target instead.
+		const ios = computeStaticStyleForPlatform("p-2 ios:p-6 android:p-4", "ios");
+		const android = computeStaticStyleForPlatform("p-2 ios:p-6 android:p-4", "android");
+		const web = computeStaticStyleForPlatform("p-2 ios:p-6 android:p-4", "web");
+		expect(ios.padding).toBe(24);
+		expect(android.padding).toBe(16);
+		expect(web.padding).toBe(8);
+	});
+
+	test("other context fields stay at their defaults", () => {
+		const style = computeStaticStyleForPlatform("android:bg-black dark:bg-white", "android");
+		// dark:bg-white should not apply -- DEFAULT_STYLE_CONTEXT.colorScheme is
+		// "light", and this function only overrides platform.
+		expect(style.backgroundColor).toBe("#000000");
 	});
 });

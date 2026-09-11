@@ -10,6 +10,7 @@ export {
 	classNameContextNeeds,
 	classNameIsAotCompilable,
 	classNameIsContextFree,
+	classNameIsPlatformOnlyVariant,
 	type ClassNameContextNeeds,
 } from "./contextNeeds";
 export { parseClassToken, tokenize } from "./tokenizer";

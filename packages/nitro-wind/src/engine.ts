@@ -237,3 +237,22 @@ export function clearEngineCache(): void {
 export function computeStaticStyle(className: string): PublicStyleResult["style"] {
 	return computeStyle(className).style;
 }
+
+/**
+ * Like `computeStaticStyle`, but for a className whose only variants are
+ * platform variants (ios/android/web) — resolved with the given platform
+ * baked into the context instead of `DEFAULT_STYLE_CONTEXT`'s fixed "ios".
+ * Called by code the Babel plugin generates (see babel.js's
+ * platformOnlyVariantEligible) for a build that has resolved to a single
+ * target platform, so the variant never needs to be selected at render time.
+ * Every other context field stays at its default — safe only because the
+ * plugin only takes this path when nitro-wind-core's
+ * classNameIsPlatformOnlyVariant has already confirmed no other axis is in
+ * play for this className.
+ */
+export function computeStaticStyleForPlatform(
+	className: string,
+	platform: StyleContext["platform"],
+): PublicStyleResult["style"] {
+	return computeStyle(className, { platform }).style;
+}

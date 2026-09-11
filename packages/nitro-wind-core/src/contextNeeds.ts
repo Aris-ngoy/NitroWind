@@ -153,3 +153,36 @@ export function classNameIsAotCompilable(className: string): boolean {
 	}
 	return true;
 }
+
+/**
+ * Whether every variant in this className is a platform variant (ios/android/
+ * web) and nothing else needs runtime resolution — no colorScheme, rtl,
+ * layout, interaction, group, or animation. `Platform.OS` never changes
+ * within a running app instance, so when the target platform is known at
+ * build time (Metro passes it to Babel via `api.caller`), a className meeting
+ * this contract can be resolved to a single value once, at transform time,
+ * with no runtime selector needed — unlike `classNameIsAotCompilable`, which
+ * requires zero variants of any kind.
+ *
+ * Deliberately mutually exclusive with `classNameIsAotCompilable`: this
+ * returns false for a variant-free className (that's the other function's
+ * job) and requires at least one platform variant to actually be present.
+ *
+ * `packages/nitro-wind/babel.js` has its own independently-written twin of
+ * this check for the same cross-runtime reason `classNameIsAotCompilable`
+ * does — agreement is enforced by the parity test in
+ * `packages/nitro-wind/src/__tests__/babel.test.ts`, not shared code.
+ */
+export function classNameIsPlatformOnlyVariant(className: string): boolean {
+	if (!className) return false;
+	const needs = classNameContextNeeds(className);
+	return (
+		needs.platform &&
+		!needs.colorScheme &&
+		!needs.rtl &&
+		!needs.layout &&
+		!needs.interaction &&
+		!needs.group &&
+		!needs.animation
+	);
+}

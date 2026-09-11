@@ -39,6 +39,56 @@ function isAotCompilableClassName(className) {
 	return true;
 }
 
+const PLATFORM_VARIANTS = new Set(["ios", "android", "web"]);
+
+// Ported from nitro-wind-core's tokenizer.ts: the same bracket-tracking
+// colon-split hasBareColon above already implements, extended to collect the
+// variants list instead of only detecting presence — needed here to check
+// what KIND of variant each one is, not just whether one exists.
+function parseClassToken(raw) {
+	let input = raw;
+	if (input.startsWith("!")) {
+		input = input.slice(1);
+	}
+	const variants = [];
+	let cursor = 0;
+	let bracket = 0;
+	for (let i = 0; i < input.length; i++) {
+		const ch = input[i];
+		if (ch === "[") bracket++;
+		else if (ch === "]") bracket = Math.max(0, bracket - 1);
+		else if (ch === ":" && bracket === 0) {
+			variants.push(input.slice(cursor, i));
+			cursor = i + 1;
+		}
+	}
+	return { variants, utility: input.slice(cursor) };
+}
+
+function tokenizeClassName(className) {
+	return className.trim().split(/\s+/).filter(Boolean).map(parseClassToken);
+}
+
+// The build-time twin of nitro-wind-core's classNameIsPlatformOnlyVariant —
+// same cross-runtime constraint and same parity-test enforcement as
+// isAotCompilableClassName above. True when every variant present is a
+// platform variant (ios/android/web) and there is at least one — mutually
+// exclusive with isAotCompilableClassName, which handles the zero-variant
+// case.
+function platformOnlyVariantEligible(className) {
+	if (!className) return false;
+	if (/(?:^|\s)group(?:\s|$)/.test(className)) return false;
+	if (className.includes("animate-") || className.includes("transition")) return false;
+	let hasPlatformVariant = false;
+	for (const token of tokenizeClassName(className)) {
+		for (const variant of token.variants) {
+			if (!PLATFORM_VARIANTS.has(variant)) return false;
+			hasPlatformVariant = true;
+		}
+	}
+	return hasPlatformVariant;
+}
+
 function literalClassName(types, attribute) {
 	const value = attribute.value;
 	if (types.isStringLiteral(value)) return value.value;
@@ -161,13 +211,29 @@ function isNitroWindLibraryFile(filename) {
 	);
 }
 
-function nitroWindBabelPlugin({ types: t }) {
+function nitroWindBabelPlugin(api) {
+	const t = api.types;
+	// Metro passes the target platform to Babel plugin factories this way —
+	// api.caller is part of @babel/core's standard plugin API (present on the
+	// same object types is destructured from), and babel-preset-expo's own
+	// use-dom-directive-plugin.js already reads api.caller(c => c?.platform)
+	// from a plugin factory the same way, so this is a proven pattern, not a
+	// speculative one. Platform.OS never changes within a running app
+	// instance, so when this is known, a platform-only-variant className
+	// (see platformOnlyVariantEligible) can be resolved to a single value
+	// here instead of needing a runtime selector. Undefined when run outside
+	// Metro (e.g. this file's own unit tests, which don't pass a caller) —
+	// platform-only-variant classNames then fall through to the existing
+	// runtime path untouched, same as any other variant-bearing className.
+	const targetPlatform = api.caller((caller) => caller?.platform);
+
 	return {
 		name: "nitro-wind-classname",
 		pre() {
 			this.staticStyles = [];
 			this.stylesId = null;
 			this.computeId = null;
+			this.computeForPlatformId = null;
 		},
 		visitor: {
 			ImportDeclaration(path, state) {
@@ -203,7 +269,22 @@ function nitroWindBabelPlugin({ types: t }) {
 			JSXAttribute(path, state) {
 				if (!t.isJSXIdentifier(path.node.name, { name: "className" })) return;
 				const className = literalClassName(t, path.node);
-				if (!className || !isAotCompilableClassName(className)) return;
+				if (!className) return;
+
+				// Two independent, mutually exclusive build-time-eligible shapes:
+				// zero variants (resolvable on every platform, forever), or platform
+				// variants only, resolvable now because this build already knows its
+				// target platform. Anything else (colorScheme, rtl, breakpoints,
+				// interaction, group, animation, or an unknown target platform) stays
+				// on the runtime path exactly as before this candidate.
+				let platform;
+				if (isAotCompilableClassName(className)) {
+					platform = undefined;
+				} else if (targetPlatform && platformOnlyVariantEligible(className)) {
+					platform = targetPlatform;
+				} else {
+					return;
+				}
 
 				const opening = path.parent;
 				if (!t.isJSXOpeningElement(opening)) return;
@@ -216,7 +297,7 @@ function nitroWindBabelPlugin({ types: t }) {
 				}
 
 				const id = `n${this.staticStyles.length}`;
-				this.staticStyles.push({ id, className });
+				this.staticStyles.push({ id, className, platform });
 
 				const styleExpr = t.memberExpression(t.cloneNode(this.stylesId), t.identifier(id));
 				const styleAttr = opening.attributes.find(
@@ -262,17 +343,39 @@ function nitroWindBabelPlugin({ types: t }) {
 					const entries = this.staticStyles;
 					if (!entries.length || !this.stylesId) return;
 
-					if (!this.computeId) {
-						this.computeId = path.scope.generateUidIdentifier("computeStaticStyle");
-					}
 					const filename = this.filename ?? this.file.opts.filename;
-					const computeId = addNamedImport(
-						t,
-						path,
-						computeStaticImportSource(filename),
-						"computeStaticStyle",
-						this.computeId,
-					);
+					const importSource = computeStaticImportSource(filename);
+
+					// Each import is added only if some entry actually needs it -- a
+					// file whose hoisted classNames are all platform-only (or all
+					// zero-variant) would otherwise end up with an unused import of
+					// whichever function it never calls.
+					const needsCompute = entries.some((entry) => !entry.platform);
+					let computeId;
+					if (needsCompute) {
+						if (!this.computeId) {
+							this.computeId = path.scope.generateUidIdentifier("computeStaticStyle");
+						}
+						computeId = addNamedImport(t, path, importSource, "computeStaticStyle", this.computeId);
+					}
+
+					const needsPlatformResolver = entries.some((entry) => entry.platform);
+					let computeForPlatformId;
+					if (needsPlatformResolver) {
+						if (!this.computeForPlatformId) {
+							this.computeForPlatformId = path.scope.generateUidIdentifier(
+								"computeStaticStyleForPlatform",
+							);
+						}
+						computeForPlatformId = addNamedImport(
+							t,
+							path,
+							importSource,
+							"computeStaticStyleForPlatform",
+							this.computeForPlatformId,
+						);
+					}
+
 					const styleSheetId = addNamedImport(
 						t,
 						path,
@@ -284,7 +387,12 @@ function nitroWindBabelPlugin({ types: t }) {
 					const properties = entries.map((entry) =>
 						t.objectProperty(
 							t.identifier(entry.id),
-							t.callExpression(t.cloneNode(computeId), [t.stringLiteral(entry.className)]),
+							entry.platform
+								? t.callExpression(t.cloneNode(computeForPlatformId), [
+										t.stringLiteral(entry.className),
+										t.stringLiteral(entry.platform),
+									])
+								: t.callExpression(t.cloneNode(computeId), [t.stringLiteral(entry.className)]),
 						),
 					);
 
@@ -306,4 +414,5 @@ function nitroWindBabelPlugin({ types: t }) {
 }
 
 nitroWindBabelPlugin.isAotCompilableClassName = isAotCompilableClassName;
+nitroWindBabelPlugin.platformOnlyVariantEligible = platformOnlyVariantEligible;
 module.exports = nitroWindBabelPlugin;
