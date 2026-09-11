@@ -1,4 +1,4 @@
-import { classNameIsContextFree } from "nitro-wind-core";
+import { classNameContextNeeds, classNameIsContextFree } from "nitro-wind-core";
 import { type ComponentType, forwardRef, useCallback, useState } from "react";
 import { Pressable, type StyleProp, type ViewStyle } from "react-native";
 import { computeStyle } from "./engine";
@@ -11,18 +11,11 @@ type ClassNameProps = {
 	style?: StyleProp<ViewStyle>;
 };
 
-function needsInteractiveRuntime(className?: string): boolean {
-	if (!className) return false;
-	return (
-		className.includes("active:") ||
-		className.includes("hover:") ||
-		className.includes("focus:") ||
-		className.includes("disabled:") ||
-		className.includes("group-") ||
-		/(?:^|\s)group(?:\s|$)/.test(className) ||
-		className.includes("animate-") ||
-		className.includes("transition")
-	);
+// Reads the one cached ClassNamePlan (nitro-wind-core's classNameContextNeeds)
+// instead of re-scanning the className with 8 substring checks per render.
+function needsInteractiveRuntime(className: string): boolean {
+	const needs = classNameContextNeeds(className);
+	return needs.interaction || needs.group || needs.animation;
 }
 
 export function styled<P extends object>(Component: ComponentType<P>) {

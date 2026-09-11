@@ -20,6 +20,17 @@ function hasBareColon(className) {
 	return false;
 }
 
+// The build-time twin of nitro-wind-core's classNameIsAotCompilable. The two
+// cannot literally share code: this file runs as plain CommonJS with no build
+// step of its own (react-native-builder-bob only compiles src/, not babel.js
+// at the package root — see package.json's react-native-builder-bob.source),
+// so it cannot `require` nitro-wind-core's TypeScript source directly. Both
+// implementations are deliberately conservative in the same way — any bare
+// colon (a variant, recognized or not), any bare "group" utility, or any
+// animation utility disqualifies a className from being hoisted, because none
+// of those are resolvable at build time. Agreement is enforced by the parity
+// test in packages/nitro-wind/src/__tests__/babel.test.ts, which runs both
+// functions against the same battery of classNames — not by shared code.
 function isAotCompilableClassName(className) {
 	if (!className) return false;
 	if (hasBareColon(className)) return false;

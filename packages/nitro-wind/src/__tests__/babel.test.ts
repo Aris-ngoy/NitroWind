@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { classNameIsAotCompilable } from "nitro-wind-core";
 
 const plugin = require("../../babel.js") as typeof import("../../babel.js") & {
 	isAotCompilableClassName: (className: string) => boolean;
@@ -16,6 +17,58 @@ describe("isAotCompilableClassName", () => {
 		expect(plugin.isAotCompilableClassName("group p-4")).toBe(false);
 		expect(plugin.isAotCompilableClassName("animate-spin")).toBe(false);
 	});
+});
+
+// The build-time predicate (babel.js) and the runtime predicate
+// (nitro-wind-core's classNameIsAotCompilable) are two independent
+// implementations that cannot share code across the CJS/build-step divide
+// (see the comment on isAotCompilableClassName in babel.js). This is the
+// mechanism that keeps them from drifting apart silently: every case here
+// must produce the same answer from both, including edge cases neither
+// predicate's own unit tests previously covered on its own.
+describe("isAotCompilableClassName / classNameIsAotCompilable parity", () => {
+	const cases = [
+		"",
+		"p-4 bg-red-500 flex-1",
+		"bg-[#ff0055]",
+		"content-['a:b']",
+		"w-[50%]",
+		"dark:bg-black",
+		"light:bg-white",
+		"md:flex-row",
+		"ios:p-6",
+		"android:p-4",
+		"rtl:ml-2",
+		"ltr:mr-2",
+		"active:opacity-80",
+		"pressed:opacity-80",
+		"hover:bg-slate-800",
+		"focus:border-blue-500",
+		"disabled:opacity-40",
+		"group",
+		"group p-4",
+		"group-active:text-red-500",
+		"group-hover:bg-slate-800",
+		"animate-spin",
+		"animate-none",
+		"transition",
+		"transition-all",
+		"transition-colors duration-300 ease-in-out",
+		"duration-300",
+		"ease-in",
+		// unrecognized variant — a bare colon that no known variant matches.
+		// parseClassName skips any token with an unmatched variant, so this
+		// is behaviorally invariant, but neither predicate should reason its
+		// way to "safe to hoist" from that coincidence.
+		"foo:p-4",
+		"unknown-variant:bg-red-500 p-4",
+	];
+
+	for (const className of cases) {
+		test(`agrees on ${JSON.stringify(className)}`, () => {
+			expect(plugin.isAotCompilableClassName(className)).toBe(classNameIsAotCompilable(className));
+		});
+	}
 });
 
 describe("nitro-wind babel plugin", () => {

@@ -32,4 +32,36 @@ describe("classNameContextNeeds", () => {
 		expect(classNameIsAotCompilable("animate-spin")).toBe(false);
 		expect(classNameIsAotCompilable("group")).toBe(false);
 	});
+
+	test("detects animation utilities without a colon or bare group", () => {
+		expect(classNameContextNeeds("animate-spin").animation).toBe(true);
+		expect(classNameContextNeeds("transition").animation).toBe(true);
+		expect(classNameContextNeeds("transition-colors").animation).toBe(true);
+		expect(classNameContextNeeds("p-4 bg-red-500").animation).toBe(false);
+		expect(classNameIsContextFree("animate-spin")).toBe(false);
+	});
+
+	test("duration-*/ease-* alone do not require the interactive render shape", () => {
+		// They only matter paired with an animate-*/transition utility that
+		// actually reads durationMs/easing (see reanimated.ts's useAnimatedClassName,
+		// which returns baseStyle unchanged when there is no animation name and no
+		// transition, regardless of durationMs/easing) — so, unlike animate-*/
+		// transition, they alone should not force a className onto the interactive
+		// runtime path or out of AOT eligibility.
+		expect(classNameContextNeeds("duration-300").animation).toBe(false);
+		expect(classNameContextNeeds("ease-in").animation).toBe(false);
+		expect(classNameIsAotCompilable("duration-300")).toBe(true);
+	});
+
+	test("an unrecognized variant is not AOT-eligible even though it is context-free", () => {
+		// classNameContextNeeds treats "foo" as a no-op variant (parseClassName
+		// skips any token with an unmatched variant), so it is genuinely
+		// context-free. But that inference is a property of the parser's current
+		// skip-on-mismatch behavior, not a general guarantee — classNameIsAotCompilable
+		// additionally requires zero variants of any kind before hoisting, matching
+		// packages/nitro-wind/babel.js's independently-written conservative check
+		// (see the parity test in packages/nitro-wind/src/__tests__/babel.test.ts).
+		expect(classNameIsContextFree("foo:p-4")).toBe(true);
+		expect(classNameIsAotCompilable("foo:p-4")).toBe(false);
+	});
 });
