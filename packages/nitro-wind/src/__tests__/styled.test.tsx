@@ -155,4 +155,64 @@ describe("styled() render shapes", () => {
 
 		renderer.unmount();
 	});
+
+	test("a colorScheme-only className does not re-render on an unrelated interaction change", () => {
+		let renderCount = 0;
+		function TrackedBox(props: BoxProps) {
+			renderCount++;
+			return <Box {...props} />;
+		}
+		const StyledTracked = styled(TrackedBox);
+
+		function App() {
+			return (
+				<StyledBox className="active:opacity-50" testID="outer">
+					<StyledTracked className="dark:bg-black" testID="inner" />
+				</StyledBox>
+			);
+		}
+
+		function findViewByTestId(renderer: TestRenderer.ReactTestRenderer, testID: string) {
+			// Two "View" host nodes exist here (outer + inner), so findView's
+			// single-match helper doesn't apply — pick the one with this testID.
+			const views = renderer.root.findAllByType("View" as unknown as React.ComponentType);
+			const match = views.find((view) => (view.props as { testID?: string }).testID === testID);
+			if (!match) throw new Error(`no View with testID ${testID}`);
+			return match;
+		}
+
+		const renderer = render(<App />);
+		const outer = findViewByTestId(renderer, "outer") as unknown as {
+			props: { onPressIn: () => void; onPressOut: () => void };
+		};
+		const initialRenderCount = renderCount;
+		expect(initialRenderCount).toBeGreaterThan(0);
+
+		// Pressing the outer element mounts InteractionProvider's nested store,
+		// which the inner colorScheme-only element's DynamicStyled subscribes to
+		// directly via useSyncExternalStore (it's a descendant, so it resolves
+		// to that nested store, not the top-level one) — this subscription is
+		// exactly what used to force every colorScheme-only descendant to
+		// re-render on every press, independent of any parent-reference-equality
+		// bailout React might otherwise apply.
+		TestRenderer.act(() => {
+			outer.props.onPressIn();
+		});
+		TestRenderer.act(() => {
+			outer.props.onPressOut();
+		});
+		expect(renderCount).toBe(initialRenderCount);
+
+		// A real theme change must still re-render it.
+		TestRenderer.act(() => {
+			renderer.update(
+				<NitroWindProvider theme="dark">
+					<App />
+				</NitroWindProvider>,
+			);
+		});
+		expect(renderCount).toBeGreaterThan(initialRenderCount);
+
+		renderer.unmount();
+	});
 });
