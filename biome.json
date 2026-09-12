@@ -13,6 +13,7 @@
 			"**/.turbo/**",
 			"**/build/**",
 			"**/.expo/**",
+			"**/docs/.mintlify/**",
 			"**/nitrogen/**",
 			"**/ios/Pods/**",
 			"**/android/**",

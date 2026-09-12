@@ -1,0 +1,70 @@
+--- a/apple/Sources/ExpoModulesJSI/Runtime/JavaScriptRuntime.swift
++++ b/apple/Sources/ExpoModulesJSI/Runtime/JavaScriptRuntime.swift
+@@ -185,12 +185,15 @@
+       resultPtr: UnsafeMutablePointer<facebook.jsi.Value>
+     ) -> Bool {
+       let propertyName = String(cString: propertyName)
+-      nonisolated(unsafe) let resultPtr = resultPtr
++      // Cross the actor boundary as an address (`Int` is `Sendable`): a `nonisolated(unsafe)`
++      // capture still trips the `sending` diagnostic here on Swift 6.2.4. Rebuilt synchronously
++      // below, the pointer never outlives the call, so this is sound.
++      let resultAddr = Int(bitPattern: resultPtr)
+ 
+       return withGuaranteedContext(context) { (context: HostObjectContext, runtime) in
+         return JavaScriptActor.assumeIsolated {
+           return forwardingSwiftErrorsToJS(runtime: runtime) {
+-            try context.get(propertyName).writeJSIValue(to: resultPtr)
++            try context.get(propertyName).writeJSIValue(to: UnsafeMutablePointer(bitPattern: resultAddr)!)
+           }
+         }
+       }
+@@ -774,15 +777,21 @@
+     // synchronous call, so the `nonisolated(unsafe)` capture is sound. This removes a per-call class
+     // allocation + retain/release + dealloc that profiling showed dominating the no-op `@JS` host-call
+     // floor.
+-    nonisolated(unsafe) let thisPtr = thisPtr
+-    nonisolated(unsafe) let argumentsPtr = argumentsPtr
+-    nonisolated(unsafe) let resultPtr = resultPtr
++    // The addresses cross into the synchronous closure as `Int` (`Sendable`): `nonisolated(unsafe)`
++    // captures still trip the `sending` diagnostic on Swift 6.2.4. Rebuilt inside, they never
++    // outlive the call, so this stays sound and allocation-free.
++    let thisAddr = Int(bitPattern: thisPtr)
++    let argumentsAddr = Int(bitPattern: argumentsPtr)
++    let resultAddr = Int(bitPattern: resultPtr)
+ 
+     // See `withGuaranteedContext` for why neither the context nor the runtime is retained here, and
+     // why the result is written to the caller's slot instead of being returned.
+     return withGuaranteedContext(context) { (context: HostFunctionContext, runtime) in
+       return JavaScriptActor.assumeIsolated {
+         return forwardingSwiftErrorsToJS(runtime: runtime) {
++          let thisPtr = UnsafePointer<facebook.jsi.Value>(bitPattern: thisAddr)!
++          let argumentsPtr = UnsafePointer<facebook.jsi.Value>(bitPattern: argumentsAddr)
++          let resultPtr = UnsafeMutablePointer<facebook.jsi.Value>(bitPattern: resultAddr)!
+           let this = UnsafeMutablePointer(mutating: thisPtr).move()
+           let arguments = JavaScriptValuesBuffer(runtime, start: argumentsPtr, count: argumentsCount)
+           let thisValue = JavaScriptValue(runtime, this)
+@@ -817,17 +826,20 @@
+     // handed in as a borrowed `JavaScriptUnownedValue` pointing straight at the C++-owned `this` slot:
+     // it is not moved out and no owning `JavaScriptValue` is allocated, so the closure avoids the
+     // per-call `weak`-runtime form/destroy and heap object that the owning `this` pays.
+-    nonisolated(unsafe) let thisPtr = thisPtr
+-    nonisolated(unsafe) let argumentsPtr = argumentsPtr
+-    nonisolated(unsafe) let resultPtr = resultPtr
++    // Like the overload above, the addresses cross as `Int` (`Sendable`) and are rebuilt inside.
++    let thisAddr = Int(bitPattern: thisPtr)
++    let argumentsAddr = Int(bitPattern: argumentsPtr)
++    let resultAddr = Int(bitPattern: resultPtr)
+ 
+     // See `withGuaranteedContext` for why neither the context nor the runtime is retained here, and
+     // why the result is written to the caller's slot instead of being returned.
+     return withGuaranteedContext(context) { (context: UnownedThisHostFunctionContext, runtime) in
+       return JavaScriptActor.assumeIsolated {
+         return forwardingSwiftErrorsToJS(runtime: runtime) {
++          let argumentsPtr = UnsafePointer<facebook.jsi.Value>(bitPattern: argumentsAddr)
++          let resultPtr = UnsafeMutablePointer<facebook.jsi.Value>(bitPattern: resultAddr)!
+           let arguments = JavaScriptValuesBuffer(runtime, start: argumentsPtr, count: argumentsCount)
+-          let thisValue = JavaScriptUnownedValue(runtime.pointee, thisPtr)
++          let thisValue = JavaScriptUnownedValue(runtime.pointee, UnsafePointer<facebook.jsi.Value>(bitPattern: thisAddr)!)
+           try context.call(thisValue, consume arguments).writeJSIValue(to: resultPtr)
+         }
+       }

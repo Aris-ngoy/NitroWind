@@ -4,7 +4,7 @@
 		"strict": true,
 		"moduleResolution": "bundler",
 		"paths": {
-			"react-native-nitrowind": ["../../packages/react-native-nitrowind/src/index.ts"]
+			"nitro-wind": ["../../packages/nitro-wind/src/index.ts"]
 		}
 	}
 }

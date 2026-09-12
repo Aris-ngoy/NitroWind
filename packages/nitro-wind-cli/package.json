@@ -1,0 +1,25 @@
+{
+	"name": "nitro-wind-cli",
+	"version": "0.1.0",
+	"description": "CLI for nitro-wind theme generation and className validation",
+	"license": "MIT",
+	"type": "module",
+	"bin": {
+		"nitro-wind": "./src/cli.ts"
+	},
+	"files": ["src", "LICENSE", "README.md"],
+	"scripts": {
+		"typecheck": "tsc --noEmit"
+	},
+	"dependencies": {
+		"nitro-wind-core": "workspace:*"
+	},
+	"devDependencies": {
+		"typescript": "^5.8.2"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/Aris-ngoy/NitroWind.git",
+		"directory": "packages/nitro-wind-cli"
+	}
+}

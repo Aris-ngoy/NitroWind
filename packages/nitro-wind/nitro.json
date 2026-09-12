@@ -9,14 +9,20 @@
 		"androidCxxLibName": "Nitrowind"
 	},
 	"autolinking": {
-		"Nitrowind": {
+		"StyleEngine": {
+			"all": {
+				"language": "c++",
+				"implementationClassName": "HybridStyleEngine"
+			}
+		},
+		"NativeThemeTransition": {
 			"ios": {
 				"language": "swift",
-				"implementationClassName": "HybridNitrowind"
+				"implementationClassName": "HybridNativeThemeTransition"
 			},
 			"android": {
 				"language": "kotlin",
-				"implementationClassName": "HybridNitrowind"
+				"implementationClassName": "HybridNativeThemeTransition"
 			}
 		}
 	},

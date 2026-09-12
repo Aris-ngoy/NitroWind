@@ -137,6 +137,9 @@ dependencies {
 
   // Add a dependency on NitroModules
   implementation project(":react-native-nitro-modules")
+
+  implementation "androidx.appcompat:appcompat:1.7.0"
+  implementation "androidx.core:core-ktx:1.15.0"
 }
 
 if (isNewArchitectureEnabled()) {

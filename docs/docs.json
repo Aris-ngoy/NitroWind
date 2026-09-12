@@ -1,0 +1,109 @@
+{
+	"$schema": "https://mintlify.com/docs.json",
+	"theme": "maple",
+	"name": "nitro-wind",
+	"description": "High-performance Tailwind CSS engine for React Native, powered by Nitro Modules.",
+	"colors": {
+		"primary": "#4F46E5",
+		"light": "#818CF8",
+		"dark": "#3730A3"
+	},
+	"logo": {
+		"light": "/logo/light.svg",
+		"dark": "/logo/dark.svg",
+		"href": "https://github.com/Aris-ngoy/NitroWind"
+	},
+	"favicon": "/favicon.png",
+	"icons": {
+		"library": "lucide"
+	},
+	"appearance": {
+		"default": "system"
+	},
+	"navbar": {
+		"links": [
+			{
+				"type": "github",
+				"href": "https://github.com/Aris-ngoy/NitroWind"
+			}
+		],
+		"primary": {
+			"type": "button",
+			"label": "Get started",
+			"href": "/guide/getting-started"
+		}
+	},
+	"footer": {
+		"socials": {
+			"github": "https://github.com/Aris-ngoy/NitroWind",
+			"x": "https://x.com/harrisngoy"
+		},
+		"links": [
+			{
+				"header": "Library",
+				"items": [
+					{
+						"label": "GitHub",
+						"href": "https://github.com/Aris-ngoy/NitroWind"
+					},
+					{
+						"label": "npm",
+						"href": "https://www.npmjs.com/package/nitro-wind"
+					},
+					{
+						"label": "License",
+						"href": "https://github.com/Aris-ngoy/NitroWind/blob/main/LICENSE"
+					}
+				]
+			}
+		]
+	},
+	"contextual": {
+		"options": ["copy", "view", "chatgpt", "claude", "cursor", "vscode"],
+		"display": "header"
+	},
+	"search": {
+		"prompt": "Search nitro-wind..."
+	},
+	"navigation": {
+		"groups": [
+			{
+				"group": "Get started",
+				"icon": "rocket",
+				"pages": ["index", "guide/getting-started"]
+			},
+			{
+				"group": "Guide",
+				"icon": "book-open",
+				"pages": ["guide/architecture", "guide/theming", "guide/animations"]
+			},
+			{
+				"group": "API",
+				"icon": "code",
+				"pages": ["api/overview"]
+			},
+			{
+				"group": "Migration",
+				"icon": "arrow-right-left",
+				"pages": ["migration/nativewind", "migration/uniwind", "migration/unistyles"]
+			}
+		]
+	},
+	"redirects": [
+		{
+			"source": "/quickstart",
+			"destination": "/guide/getting-started",
+			"permanent": true
+		},
+		{
+			"source": "/api",
+			"destination": "/api/overview",
+			"permanent": true
+		},
+		{
+			"source": "/api/",
+			"destination": "/api/overview",
+			"permanent": true
+		}
+	]
+}

@@ -1,29 +1,44 @@
-# react-native-nitrowind
+# nitro-wind
 
-react-native-nitrowind is a react native package built with Nitro
+**High-performance Tailwind CSS engine for React Native, powered by Nitro Modules.**
 
-[![Version](https://img.shields.io/npm/v/react-native-nitrowind.svg)](https://www.npmjs.com/package/react-native-nitrowind)
-[![Downloads](https://img.shields.io/npm/dm/react-native-nitrowind.svg)](https://www.npmjs.com/package/react-native-nitrowind)
-[![License](https://img.shields.io/npm/l/react-native-nitrowind.svg)](https://github.com/patrickkabwe/react-native-nitrowind/LICENSE)
+`nitro-wind` brings the familiar Tailwind utility-class API to React Native with a native C++ core. It delivers near-zero JavaScript style resolution, a JS fallback for Expo Go, and a MIT-licensed developer experience.
 
-## Requirements
+```tsx
+import { NitroWindProvider, styled, useStyle } from "nitro-wind";
+import { View, Text } from "react-native";
 
-- React Native v0.76.0 or higher
-- Node 18.0.0 or higher
+const Box = styled(View);
 
-> [!IMPORTANT]  
-> To Support `Nitro Views` you need to install React Native version v0.78.0 or higher.
+export function Example() {
+	const style = useStyle("p-4 bg-red-500 dark:bg-blue-600 ios:p-6");
 
-## Installation
-
-```bash
-npm install react-native-nitrowind react-native-nitro-modules
+	return (
+		<NitroWindProvider theme="dark">
+			<Box className="flex-1 items-center justify-center">
+				<Text className="text-white text-xl font-bold">Hello nitro-wind</Text>
+			</Box>
+		</NitroWindProvider>
+	);
+}
 ```
 
-## Credits
+## Install
 
-Bootstrapped with [create-nitro-module](https://github.com/patrickkabwe/create-nitro-module).
+```bash
+bun add nitro-wind react-native-nitro-modules
+```
 
-## Contributing
+For Expo Go, the pure JavaScript engine is used automatically. Custom development builds and bare React Native apps can use the C++ Nitro HybridObject.
 
-Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
+Optional Babel plugin (rewrites `react-native` `View`/`Text` imports so they accept `className`, and hoists invariant static `className`s into `StyleSheet.create`):
+
+```js
+module.exports = {
+	plugins: ["nitro-wind/babel"],
+};
+```
+
+## License
+
+MIT

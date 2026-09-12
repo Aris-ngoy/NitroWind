@@ -1,0 +1,11 @@
+{
+	"name": "nitro-wind-docs",
+	"private": true,
+	"version": "0.1.0",
+	"scripts": {
+		"dev": "npx mint dev --no-open",
+		"validate": "npx mint validate",
+		"broken-links": "npx mint broken-links",
+		"typecheck": "echo 'docs: no tsconfig'"
+	}
+}

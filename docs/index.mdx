@@ -1,0 +1,53 @@
+---
+title: "nitro-wind"
+description: "High-performance Tailwind CSS engine for React Native, powered by Nitro Modules."
+keywords: ["nitro-wind", "tailwind", "react native", "nitro modules", "nativewind"]
+---
+
+`nitro-wind` brings Tailwind utility classes to React Native with a native C++ engine. Expo Go uses the JavaScript fallback automatically. A development build or bare React Native app loads the C++ engine after you rebuild.
+
+Fully free and open source under the MIT license.
+
+<Columns cols={2}>
+  <Card title="Get started" icon="rocket" href="/guide/getting-started">
+    Install the library, add the Babel plugin, and wrap your app in `NitroWindProvider`.
+  </Card>
+  <Card title="Architecture" icon="cpu" href="/guide/architecture">
+    How class names become inflated React Native styles through the native or JS engine.
+  </Card>
+  <Card title="Theming" icon="sun-moon" href="/guide/theming">
+    Light and dark schemes, `dark:` variants, and native theme transitions.
+  </Card>
+  <Card title="Public API" icon="code" href="/api/overview">
+    Provider, `styled()`, `useStyle()`, engine helpers, and pre-styled components.
+  </Card>
+</Columns>
+
+## Why nitro-wind
+
+<AccordionGroup>
+  <Accordion title="Native C++ resolution" icon="zap">
+    `className` strings are tokenized, parsed, and inflated in C++ on a development build or bare React Native app. Expo Go stays on the TypeScript engine from `nitro-wind-core`.
+  </Accordion>
+  <Accordion title="Same API as Tailwind" icon="palette">
+    Layout, spacing, color, typography, and variant prefixes (`dark:`, `ios:`, `md:`, `active:`) work as utility classes. You do not write a StyleSheet for the common cases.
+  </Accordion>
+  <Accordion title="Invariant class names stay cheap" icon="gauge">
+    Static class names with no variants skip theme and layout subscriptions. The Babel plugin can hoist those literals into `StyleSheet.create`.
+  </Accordion>
+</AccordionGroup>
+
+## Resolve speed
+
+Resolve Speed times a synchronous, headless `className → style` call. `nitro-wind` exposes `computeStyle()` for that path. NativeWind and Uniwind resolve inside a React render, so they show as unmeasured here and are compared on the Rendering tab of the example app.
+
+<Columns cols={2}>
+  <Card title="iPhone 17 Pro">
+    ![Resolve Speed on iPhone 17 Pro: nitro-wind at 5.41M ops/s](/images/benchmark-iphone17pro.png)
+  </Card>
+  <Card title="Pixel 10">
+    ![Resolve Speed on Pixel 10: nitro-wind at 1.01M ops/s](/images/benchmark-pixel10.png)
+  </Card>
+</Columns>
+
+Repo example: [`apps/compare-example`](https://github.com/Aris-ngoy/NitroWind/tree/main/apps/compare-example).

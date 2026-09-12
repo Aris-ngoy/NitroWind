@@ -1,0 +1,25 @@
+{
+	"name": "nitro-wind-core",
+	"version": "0.1.0",
+	"description": "Shared Tailwind types, theme tokens, and style engine for nitro-wind",
+	"license": "MIT",
+	"type": "module",
+	"main": "./src/index.ts",
+	"types": "./src/index.ts",
+	"exports": {
+		".": "./src/index.ts"
+	},
+	"files": ["src", "LICENSE", "README.md"],
+	"scripts": {
+		"typecheck": "tsc --noEmit",
+		"test": "bun test"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/Aris-ngoy/NitroWind.git",
+		"directory": "packages/nitro-wind-core"
+	},
+	"devDependencies": {
+		"typescript": "^5.8.2"
+	}
+}

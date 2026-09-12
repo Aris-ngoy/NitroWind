@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+  <defs>
+    <linearGradient id="nw-bg" x1="16" y1="0" x2="112" y2="128" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#6366F1"/>
+      <stop offset="48%" stop-color="#4F46E5"/>
+      <stop offset="100%" stop-color="#7C3AED"/>
+    </linearGradient>
+    <linearGradient id="nw-n" x1="40" y1="22" x2="104" y2="108" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#F8FAFF"/>
+      <stop offset="100%" stop-color="#C7D2FE"/>
+    </linearGradient>
+    <linearGradient id="nw-bolt" x1="56" y1="24" x2="72" y2="108" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="55%" stop-color="#67E8F9"/>
+      <stop offset="100%" stop-color="#22D3EE"/>
+    </linearGradient>
+    <filter id="nw-glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="2.2" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <rect width="128" height="128" rx="36" fill="url(#nw-bg)"/>
+  <ellipse cx="64" cy="7" rx="38" ry="4.5" fill="#fff" opacity="0.38"/>
+  <g fill="#E0E7FF" opacity="0.92">
+    <rect x="10" y="42" width="20" height="6.5" rx="3.25"/>
+    <rect x="8" y="58" width="24" height="7" rx="3.5"/>
+    <rect x="12" y="75" width="16" height="6.5" rx="3.25"/>
+  </g>
+  <path fill="url(#nw-n)" d="M36.5 102.5 31.8 25.5h19.2l27.4 48.2V25.5H98.2l4.7 77H83.6L56.4 54.6v47.9H36.5Z"/>
+  <path filter="url(#nw-glow)" fill="url(#nw-bolt)" d="M71.2 24.5 54.4 64.2l10.6-2.1L49.8 106l29.4-46.6-11.2 2.4L83.6 24.5H71.2Z"/>
+</svg>

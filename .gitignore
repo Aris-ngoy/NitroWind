@@ -30,5 +30,5 @@ android/build
 *.apk
 *.aab
 
-# Nitro
-nitrogen
+# Generated Nitro bindings (created by `bunx nitrogen`)
+packages/nitro-wind/nitrogen/generated/**/tmp

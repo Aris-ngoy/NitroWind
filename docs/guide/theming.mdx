@@ -1,0 +1,51 @@
+---
+title: "Theming"
+description: "Light and dark schemes, dark: variants, and native snapshot theme transitions."
+keywords: ["theme", "dark mode", "ThemeTransitionPreset", "setTheme"]
+---
+
+`NitroWindProvider` selects light or dark. Utility variants `dark:` and `light:` are resolved from that scheme (or the system appearance when no theme is passed).
+
+```tsx
+<NitroWindProvider theme="dark">
+  <Box className="bg-white dark:bg-slate-950" />
+</NitroWindProvider>
+```
+
+Call `setTheme("light" | "dark")` from `useNitroWind()` to switch at runtime. The native and JS engines both clear style caches when the theme name changes.
+
+## Theme transitions
+
+On a native iOS or Android build, `setTheme` can run a snapshot overlay (fade, slide, circle, blur). Expo Go falls back to the JS overlay.
+
+```tsx
+import { NitroWind, ThemeTransitionPreset, useNitroWind } from "nitro-wind";
+import { Pressable, Text } from "react-native";
+
+export function ThemeToggle() {
+  const { theme, setTheme } = useNitroWind();
+
+  return (
+    <Pressable
+      className="rounded-full bg-zinc-200 px-4 py-2 dark:bg-zinc-800"
+      onPress={() =>
+        setTheme(theme === "dark" ? "light" : "dark", {
+          preset: ThemeTransitionPreset.CircleCenter,
+          duration: 400,
+        })
+      }
+    >
+      <Text className="text-zinc-900 dark:text-white">Theme: {theme}</Text>
+    </Pressable>
+  );
+}
+
+// Or without the hook:
+NitroWind.setTheme("dark", { preset: ThemeTransitionPreset.Fade });
+```
+
+<AccordionGroup>
+  <Accordion title="Available presets">
+    `None`, `Fade`, `SlideRightToLeft`, `SlideLeftToRight`, `CircleTopRight`, `CircleTopLeft`, `CircleBottomRight`, `CircleBottomLeft`, `CircleCenter`, `Blur`, `BlurRightToLeft`, `BlurLeftToRight`, `CircleFromOrigin`, `SlideFromOrigin`, `BlurFromOrigin`.
+  </Accordion>
+</AccordionGroup>
