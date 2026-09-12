@@ -1,0 +1,24 @@
+---
+title: "Migrate from NativeWind"
+description: "Swap NativeWindProvider and cssInterop for nitro-wind styled() and the Babel plugin."
+keywords: ["nativewind", "migration", "cssInterop"]
+---
+
+<Steps>
+  <Step title="Install">
+    Install `nitro-wind` and `react-native-nitro-modules`.
+  </Step>
+  <Step title="Replace the provider">
+    Replace `NativeWindProvider` with `NitroWindProvider`.
+  </Step>
+  <Step title="Keep className">
+    Keep using `className` on `styled()` components, or enable the Babel automapping plugin:
+
+    ```js
+    plugins: ["nitro-wind/babel"]
+    ```
+  </Step>
+  <Step title="Drop cssInterop">
+    Most Tailwind layout, spacing, color, and typography utilities work unchanged. NativeWind-specific `cssInterop` calls are unnecessary — `styled()` maps `className` onto the `style` prop.
+  </Step>
+</Steps>

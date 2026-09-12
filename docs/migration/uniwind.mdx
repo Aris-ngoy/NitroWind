@@ -1,7 +1,13 @@
-# Migrate from Uniwind
+---
+title: "Migrate from Uniwind"
+description: "Point Uniwind providers and className usage at nitro-wind."
+keywords: ["uniwind", "migration"]
+---
 
 Swap Uniwind's runtime for `nitro-wind`:
 
 - Replace Uniwind providers with `NitroWindProvider`.
 - Point `className` usage at `styled()` components from `nitro-wind`.
 - Theme tokens follow Tailwind defaults (colors, spacing, radii). Custom Uniwind themes can be re-expressed with `dark:` variants or by extending `nitro-wind-core` token tables.
+
+`Uniwind` is exported as an alias of the `NitroWind` singleton, so existing `Uniwind.setTheme(...)` calls can keep compiling while you migrate.

@@ -231,6 +231,14 @@ cd apps/compare-example && bun run start
 
 Resolve Speed only times a synchronous, headless `className → style` call. `nitro-wind` exposes `computeStyle()`; NativeWind (`cssInterop`) and Uniwind (`useResolveClassNames`) resolve inside a React render, so they show `—` here and are compared on the Rendering tab.
 
+## Docs
+
+Published on Mintlify at [nitro-wind.mintlify.app](https://nitro-wind.mintlify.app). Source lives in [`docs/`](docs). A push to `main` that changes `docs/**` deploys the live site. Pull requests that touch `docs/**` run `mint validate` and a broken-link check.
+
+```bash
+cd docs && npx mint dev
+```
+
 ## License
 
 MIT — free for everyone, forever.
