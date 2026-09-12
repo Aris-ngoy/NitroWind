@@ -405,10 +405,7 @@ export const Card = () => <View className="bg-brand-500 p-4" />;
 		const jsx = await import("@babel/plugin-syntax-jsx");
 		const dir = fs.mkdtempSync(path.join(os.tmpdir(), "nw-tw4-"));
 		const cssPath = path.join(dir, "global.css");
-		fs.writeFileSync(
-			cssPath,
-			`@import "tailwindcss";\n@theme { --color-mint-500: #4ade80; }\n`,
-		);
+		fs.writeFileSync(cssPath, `@import "tailwindcss";\n@theme { --color-mint-500: #4ade80; }\n`);
 		const result = babel.transformSync(
 			`import { View } from "react-native";
 export const Card = () => <View className="bg-mint-500 p-4" />;

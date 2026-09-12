@@ -1,4 +1,4 @@
-import type { ComponentType } from "react";
+import type { ComponentProps, ComponentType } from "react";
 import { resolveAccentColorFromStyle } from "./accents";
 import { computeStyle } from "./engine";
 import { styled } from "./styled";
@@ -47,7 +47,9 @@ export function withNitroWind<P extends object>(
 			delete remainingProps[config.fromClassName];
 		}
 
-		return <Styled {...(remainingProps as any)} {...generatedProps} />;
+		return (
+			<Styled {...({ ...remainingProps, ...generatedProps } as ComponentProps<typeof Styled>)} />
+		);
 	};
 
 	MappedComponent.displayName = `withNitroWind(${Component.displayName ?? Component.name ?? "Component"})`;

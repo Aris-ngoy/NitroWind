@@ -1,5 +1,3 @@
-"use strict";
-
 const fs = require("fs");
 const os = require("os");
 const path = require("path");
@@ -41,18 +39,18 @@ function parseLength(value) {
 }
 
 function flattenColors(input, prefix) {
-	prefix = prefix || "";
+	const keyPrefix = prefix || "";
 	if (typeof input === "string") {
-		return prefix ? { [prefix]: input } : {};
+		return keyPrefix ? { [keyPrefix]: input } : {};
 	}
 	if (!input || typeof input !== "object") return {};
 	const out = {};
 	for (const [key, value] of Object.entries(input)) {
-		if (key === "DEFAULT" && typeof value === "string" && prefix) {
-			out[prefix] = value;
+		if (key === "DEFAULT" && typeof value === "string" && keyPrefix) {
+			out[keyPrefix] = value;
 			continue;
 		}
-		const next = prefix ? `${prefix}-${key}` : key;
+		const next = keyPrefix ? `${keyPrefix}-${key}` : key;
 		if (typeof value === "string") {
 			out[next] = value;
 		} else if (value && typeof value === "object") {
@@ -110,23 +108,30 @@ function resolveMaybeFn(value) {
 }
 
 function flattenTailwindTheme(config) {
-	const theme = (config && config.theme) || {};
+	const theme = config?.theme || {};
 	const extend = theme.extend || {};
 	const colors = {};
 	if (theme.colors != null) Object.assign(colors, flattenColors(resolveMaybeFn(theme.colors)));
 	if (extend.colors != null) Object.assign(colors, flattenColors(resolveMaybeFn(extend.colors)));
 	const spacing = {};
 	if (theme.spacing != null) Object.assign(spacing, flattenLengths(resolveMaybeFn(theme.spacing)));
-	if (extend.spacing != null) Object.assign(spacing, flattenLengths(resolveMaybeFn(extend.spacing)));
+	if (extend.spacing != null)
+		Object.assign(spacing, flattenLengths(resolveMaybeFn(extend.spacing)));
 	const radius = {};
-	if (theme.borderRadius != null) Object.assign(radius, flattenLengths(resolveMaybeFn(theme.borderRadius)));
-	if (extend.borderRadius != null) Object.assign(radius, flattenLengths(resolveMaybeFn(extend.borderRadius)));
+	if (theme.borderRadius != null)
+		Object.assign(radius, flattenLengths(resolveMaybeFn(theme.borderRadius)));
+	if (extend.borderRadius != null)
+		Object.assign(radius, flattenLengths(resolveMaybeFn(extend.borderRadius)));
 	const fontSize = {};
-	if (theme.fontSize != null) Object.assign(fontSize, flattenFontSizes(resolveMaybeFn(theme.fontSize)));
-	if (extend.fontSize != null) Object.assign(fontSize, flattenFontSizes(resolveMaybeFn(extend.fontSize)));
+	if (theme.fontSize != null)
+		Object.assign(fontSize, flattenFontSizes(resolveMaybeFn(theme.fontSize)));
+	if (extend.fontSize != null)
+		Object.assign(fontSize, flattenFontSizes(resolveMaybeFn(extend.fontSize)));
 	const breakpoints = {};
-	if (theme.screens != null) Object.assign(breakpoints, flattenScreens(resolveMaybeFn(theme.screens)));
-	if (extend.screens != null) Object.assign(breakpoints, flattenScreens(resolveMaybeFn(extend.screens)));
+	if (theme.screens != null)
+		Object.assign(breakpoints, flattenScreens(resolveMaybeFn(theme.screens)));
+	if (extend.screens != null)
+		Object.assign(breakpoints, flattenScreens(resolveMaybeFn(extend.screens)));
 	return {
 		colors,
 		spacing,
@@ -142,7 +147,7 @@ function flattenTailwindTheme(config) {
 }
 
 function shouldLoadConfig(config) {
-	const theme = config && config.theme;
+	const theme = config?.theme;
 	if (!theme) return false;
 	return !!(
 		theme.extend ||
@@ -181,7 +186,7 @@ function loadTailwindConfigModule(configPath) {
 	}
 	try {
 		const loaded = require(configPath);
-		return loaded && loaded.default ? loaded.default : loaded;
+		return loaded?.default ? loaded.default : loaded;
 	} catch {
 		return null;
 	}
@@ -229,14 +234,14 @@ function extractLocalCssImports(source) {
 }
 
 function readCssWithImports(filePath, seen) {
-	seen = seen || new Set();
+	const visited = seen || new Set();
 	const resolved = path.resolve(filePath);
-	if (seen.has(resolved) || !fs.existsSync(resolved)) return "";
-	seen.add(resolved);
+	if (visited.has(resolved) || !fs.existsSync(resolved)) return "";
+	visited.add(resolved);
 	const source = fs.readFileSync(resolved, "utf8");
 	const parts = [];
 	for (const spec of extractLocalCssImports(source)) {
-		parts.push(readCssWithImports(path.resolve(path.dirname(resolved), spec), seen));
+		parts.push(readCssWithImports(path.resolve(path.dirname(resolved), spec), visited));
 	}
 	parts.push(source);
 	return parts.filter(Boolean).join("\n");

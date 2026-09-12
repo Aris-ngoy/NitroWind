@@ -12,13 +12,13 @@ export const classToColor = (s: string): string => s.replace(/ClassName$/, "");
 export const isColorClassProperty = (s: string): boolean =>
 	s !== "colorsClassName" &&
 	s.endsWith("ClassName") &&
-	(s.toLowerCase().includes("color") || s.endsWith("ColorClassName") || s.endsWith("backgroundColorClassName"));
+	(s.toLowerCase().includes("color") ||
+		s.endsWith("ColorClassName") ||
+		s.endsWith("backgroundColorClassName"));
 
-export const isClassProperty = (s: string): boolean =>
-	s === "className" || s.endsWith("ClassName");
+export const isClassProperty = (s: string): boolean => s === "className" || s.endsWith("ClassName");
 
-export const isStyleProperty = (s: string): boolean =>
-	s === "style" || s.endsWith("Style");
+export const isStyleProperty = (s: string): boolean => s === "style" || s.endsWith("Style");
 
 let warnedAccent = false;
 
@@ -36,7 +36,12 @@ export function getAccentColor(
 		(style?.color as string | undefined) ??
 		(style?.tintColor as string | undefined);
 
-	if (typeof process !== "undefined" && process.env?.NODE_ENV !== "production" && !accent && !warnedAccent) {
+	if (
+		typeof process !== "undefined" &&
+		process.env?.NODE_ENV !== "production" &&
+		!accent &&
+		!warnedAccent
+	) {
 		warnedAccent = true;
 		console.warn(
 			`NitroWind: className '${className}' was provided to extract accentColor but no color was found. Make sure the className includes a color utility (e.g., 'accent-red-500', 'accent-blue-600'). See https://docs.uniwind.dev/class-names#the-accent-prefix`,
@@ -59,7 +64,12 @@ export function useAccentColor(
 		(style?.color as string | undefined) ??
 		(style?.tintColor as string | undefined);
 
-	if (typeof process !== "undefined" && process.env?.NODE_ENV !== "production" && !accent && !warnedAccent) {
+	if (
+		typeof process !== "undefined" &&
+		process.env?.NODE_ENV !== "production" &&
+		!accent &&
+		!warnedAccent
+	) {
 		warnedAccent = true;
 		console.warn(
 			`NitroWind: className '${className}' was provided to extract accentColor but no color was found. Make sure the className includes a color utility (e.g., 'accent-red-500', 'accent-blue-600'). See https://docs.uniwind.dev/class-names#the-accent-prefix`,

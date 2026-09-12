@@ -673,4 +673,3 @@ export const THEME_PALETTES: Record<string, ThemePalette> = {
 		accent: "#38bdf8",
 	},
 };
-

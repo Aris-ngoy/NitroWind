@@ -37,14 +37,12 @@ export interface ImageProps extends ComponentPropsWithoutRef<typeof RNImage> {
 	tintColorClassName?: string;
 }
 
-export interface ImageBackgroundProps
-	extends ComponentPropsWithoutRef<typeof RNImageBackground> {
+export interface ImageBackgroundProps extends ComponentPropsWithoutRef<typeof RNImageBackground> {
 	className?: string;
 	imageClassName?: string;
 }
 
-export interface TextInputProps
-	extends ComponentPropsWithoutRef<typeof RNTextInput> {
+export interface TextInputProps extends ComponentPropsWithoutRef<typeof RNTextInput> {
 	className?: string;
 	placeholderTextColorClassName?: string;
 	cursorColorClassName?: string;
@@ -53,15 +51,13 @@ export interface TextInputProps
 	underlineColorAndroidClassName?: string;
 }
 
-export interface ScrollViewProps
-	extends ComponentPropsWithoutRef<typeof RNScrollView> {
+export interface ScrollViewProps extends ComponentPropsWithoutRef<typeof RNScrollView> {
 	className?: string;
 	contentContainerClassName?: string;
 	endFillColorClassName?: string;
 }
 
-export interface FlatListProps<ItemT>
-	extends ComponentPropsWithoutRef<typeof RNFlatList<ItemT>> {
+export interface FlatListProps<ItemT> extends ComponentPropsWithoutRef<typeof RNFlatList<ItemT>> {
 	className?: string;
 	contentContainerClassName?: string;
 	columnWrapperClassName?: string;
@@ -107,8 +103,7 @@ export interface ButtonProps extends ComponentPropsWithoutRef<typeof RNButton> {
 	colorClassName?: string;
 }
 
-export interface RefreshControlProps
-	extends ComponentPropsWithoutRef<typeof RNRefreshControl> {
+export interface RefreshControlProps extends ComponentPropsWithoutRef<typeof RNRefreshControl> {
 	className?: string;
 	colorsClassName?: string;
 	tintColorClassName?: string;

@@ -9,12 +9,7 @@ import {
 	resolveAccentColorFromStyle,
 } from "./accents";
 import { computeStyle } from "./engine";
-import {
-	GroupProvider,
-	type GroupState,
-	InteractionProvider,
-	useNitroWindStore,
-} from "./provider";
+import { GroupProvider, type GroupState, InteractionProvider, useNitroWindStore } from "./provider";
 import {
 	buildReanimatedProps,
 	getOrCreateAnimatedComponent,
@@ -106,7 +101,6 @@ function resolveExtraProps(
 				const existing = props[targetProp];
 				out[targetProp] = existing != null ? [resolved.style, existing] : resolved.style;
 			}
-			continue;
 		}
 	}
 
@@ -170,15 +164,7 @@ export function styled<P extends object>(Component: ComponentType<P>) {
 			exiting,
 			layout,
 		});
-		return (
-			<Target
-				{...(rest as P)}
-				{...extraProps}
-				ref={ref}
-				style={mergedStyle}
-				{...animProps}
-			/>
-		);
+		return <Target {...(rest as P)} {...extraProps} ref={ref} style={mergedStyle} {...animProps} />;
 	});
 
 	const InteractiveStyled = forwardRef<unknown, P & ClassNameProps>((props, ref) => {
@@ -269,21 +255,14 @@ export function styled<P extends object>(Component: ComponentType<P>) {
 		const { style, entering, exiting, layout, ...rest } = props;
 		const extraProps = resolveExtraProps(rest as Record<string, unknown>);
 		const resolved = classStr ? computeStyle(classStr) : { style: undefined };
-		const mergedStyle = style != null ? (resolved.style != null ? [resolved.style, style] : style) : resolved.style;
+		const mergedStyle =
+			style != null ? (resolved.style != null ? [resolved.style, style] : style) : resolved.style;
 		const { Target, animProps } = resolveTargetAndAnimationProps(Component, classStr, {
 			entering,
 			exiting,
 			layout,
 		});
-		return (
-			<Target
-				{...(rest as P)}
-				{...extraProps}
-				ref={ref}
-				style={mergedStyle}
-				{...animProps}
-			/>
-		);
+		return <Target {...(rest as P)} {...extraProps} ref={ref} style={mergedStyle} {...animProps} />;
 	});
 
 	DynamicStyled.displayName = `NitroWindDynamic(${Component.displayName ?? Component.name ?? "Component"})`;

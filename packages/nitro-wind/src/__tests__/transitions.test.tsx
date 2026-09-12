@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, mock, test } from "bun:test";
 import React from "react";
 import TestRenderer from "react-test-renderer";
+import type { NativeThemeTransitionApi } from "../transitions";
 
 mock.module("react-native", () => ({
 	Appearance: {
@@ -77,6 +78,7 @@ const {
 	NitroWindProvider,
 	ThemeTransitionOverlay,
 	ThemeTransitionPreset,
+	AppearanceOverride,
 	Uniwind,
 	resolveThemeBackground,
 	requestThemeTransition,
@@ -372,25 +374,22 @@ describe("Native Theme Transitions", () => {
 	});
 
 	test("uses NativeThemeTransition when available", () => {
-		let preparedPreset: any = null;
+		let preparedPreset: ThemeTransitionPreset | null = null;
 		let preparedTheme: string | null = null;
 		let preparedDuration = 0;
-		let animatedAppearance: any = null;
+		let animatedAppearance: AppearanceOverride | null = null;
 		let committed = false;
 		let completed = false;
 		let cancelled = false;
 
-		const mockNative = {
+		const mockNative: NativeThemeTransitionApi = {
 			isAvailable: () => true,
-			prepareTransition: (preset: any, targetTheme: string, durationMs?: number) => {
+			prepareTransition: (preset, targetTheme, durationMs) => {
 				preparedPreset = preset;
 				preparedTheme = targetTheme;
 				preparedDuration = durationMs ?? 0;
 			},
-			animateTransition: (
-				appearance: any,
-				preAnimationCallback: () => void,
-			) => {
+			animateTransition: (appearance, preAnimationCallback) => {
 				animatedAppearance = appearance;
 				preAnimationCallback();
 			},
@@ -399,8 +398,8 @@ describe("Native Theme Transitions", () => {
 			},
 		};
 
-		setNativeThemeTransitionForTesting(mockNative as any);
-		expect(getNativeThemeTransition()).toBe(mockNative as any);
+		setNativeThemeTransitionForTesting(mockNative);
+		expect(getNativeThemeTransition()).toBe(mockNative);
 
 		const handled = requestThemeTransition({
 			fromTheme: "light",
@@ -440,7 +439,7 @@ describe("Native Theme Transitions", () => {
 			cancelTransition: () => {},
 		};
 
-		setNativeThemeTransitionForTesting(mockNative as any);
+		setNativeThemeTransitionForTesting(mockNative);
 
 		let renderer: TestRenderer.ReactTestRenderer | undefined;
 		TestRenderer.act(() => {

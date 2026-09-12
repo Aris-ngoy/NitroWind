@@ -84,14 +84,9 @@ const {
 	useAccentColor,
 } = await import("../accents");
 
-const {
-	ActivityIndicator,
-	FlatList,
-	ScrollView,
-	Switch,
-	TextInput,
-	View,
-} = await import("../components");
+const { ActivityIndicator, FlatList, ScrollView, Switch, TextInput, View } = await import(
+	"../components"
+);
 
 const {
 	LayoutDirection,
@@ -105,26 +100,18 @@ const {
 
 const { useStyle } = await import("../useStyle");
 
-const {
-	getCSSVariable,
-	updateCSSVariables,
-	useCSSVariable,
-} = await import("../variables");
+const { getCSSVariable, updateCSSVariables, useCSSVariable } = await import("../variables");
 
 const { useResolveClassNames, withNitroWind, withUniwind } = await import("../withNitroWind");
 
 describe("accents utility functions", () => {
 	test("property name converters and predicates", () => {
 		expect(classToStyle("className")).toBe("style");
-		expect(classToStyle("contentContainerClassName")).toBe(
-			"contentContainerStyle",
-		);
+		expect(classToStyle("contentContainerClassName")).toBe("contentContainerStyle");
 		expect(classToStyle("columnWrapperClassName")).toBe("columnWrapperStyle");
 
 		expect(classToColor("colorClassName")).toBe("color");
-		expect(classToColor("placeholderTextColorClassName")).toBe(
-			"placeholderTextColor",
-		);
+		expect(classToColor("placeholderTextColorClassName")).toBe("placeholderTextColor");
 		expect(classToColor("cursorColorClassName")).toBe("cursorColor");
 
 		expect(isColorClassProperty("placeholderTextColorClassName")).toBe(true);
@@ -174,12 +161,8 @@ describe("CSS variables store & hooks", () => {
 			"--brand-primary": "#7c3aed",
 		});
 
-		expect(
-			getCSSVariable("--brand-primary", { scopedTheme: "dark" }),
-		).toBe("#a855f7");
-		expect(
-			getCSSVariable("--brand-primary", { scopedTheme: "light" }),
-		).toBe("#7c3aed");
+		expect(getCSSVariable("--brand-primary", { scopedTheme: "dark" })).toBe("#a855f7");
+		expect(getCSSVariable("--brand-primary", { scopedTheme: "light" })).toBe("#7c3aed");
 		expect(
 			getCSSVariable(["--brand-primary", "--brand-secondary"], {
 				scopedTheme: "dark",
@@ -333,18 +316,12 @@ describe("Components with accent and *ClassName props", () => {
 		let tree: ReactTestRenderer.ReactTestRenderer | undefined;
 		act(() => {
 			tree = ReactTestRenderer.create(
-				<ScrollView
-					contentContainerClassName="p-4"
-					contentContainerStyle={{ margin: 10 }}
-				/>,
+				<ScrollView contentContainerClassName="p-4" contentContainerStyle={{ margin: 10 }} />,
 			);
 		});
 
 		const scroll = tree?.root.findByType("ScrollView");
-		expect(scroll.props.contentContainerStyle).toEqual([
-			{ padding: 16 },
-			{ margin: 10 },
-		]);
+		expect(scroll.props.contentContainerStyle).toEqual([{ padding: 16 }, { margin: 10 }]);
 	});
 
 	test("Switch auto-extracts trackColorOnClassName and trackColorOffClassName", () => {
@@ -370,9 +347,7 @@ describe("Components with accent and *ClassName props", () => {
 	test("ActivityIndicator auto-extracts colorClassName", () => {
 		let tree: ReactTestRenderer.ReactTestRenderer | undefined;
 		act(() => {
-			tree = ReactTestRenderer.create(
-				<ActivityIndicator colorClassName="accent-purple-600" />,
-			);
+			tree = ReactTestRenderer.create(<ActivityIndicator colorClassName="accent-purple-600" />);
 		});
 
 		const indicator = tree?.root.findByType("ActivityIndicator");
@@ -382,12 +357,10 @@ describe("Components with accent and *ClassName props", () => {
 	test("Components with endFillColorClassName", () => {
 		let tree: ReactTestRenderer.ReactTestRenderer | undefined;
 		act(() => {
-			tree = ReactTestRenderer.create(
-				<ScrollView endFillColorClassName="accent-emerald-500" />,
-			);
+			tree = ReactTestRenderer.create(<ScrollView endFillColorClassName="accent-emerald-500" />);
 		});
 
-		const rendered = tree?.root.findByType("ScrollView" as any);
+		const rendered = tree?.root.findByType("ScrollView");
 		expect(rendered.props.endFillColor).toBe("#10b981");
 	});
 
@@ -395,14 +368,14 @@ describe("Components with accent and *ClassName props", () => {
 		expect(withUniwind).toBe(withNitroWind);
 
 		interface CustomCardProps {
-			titleStyle?: unknown;
+			titleStyle?: Record<string, unknown>;
 			titleClassName?: string;
 			accentColor?: string;
 			accentClassName?: string;
 		}
 
 		function CustomCard(props: CustomCardProps) {
-			return <View style={props.titleStyle as any} />;
+			return <View style={props.titleStyle} />;
 		}
 
 		const WrappedCard = withNitroWind(CustomCard, {
@@ -416,10 +389,7 @@ describe("Components with accent and *ClassName props", () => {
 		let tree: ReactTestRenderer.ReactTestRenderer | undefined;
 		act(() => {
 			tree = ReactTestRenderer.create(
-				<WrappedCard
-					titleClassName="p-6"
-					accentClassName="accent-rose-500"
-				/>,
+				<WrappedCard titleClassName="p-6" accentClassName="accent-rose-500" />,
 			);
 		});
 

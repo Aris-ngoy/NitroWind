@@ -146,10 +146,7 @@ function toPascalCase(str: string): string {
 		.join("");
 }
 
-function parseModifier(
-	action: string,
-	target: ReanimatedModifierConfig,
-): boolean {
+function parseModifier(action: string, target: ReanimatedModifierConfig): boolean {
 	if (action.startsWith("duration-")) {
 		const rest = action.slice("duration-".length);
 		const val = rest in DURATION ? DURATION[rest] : Number.parseFloat(rest);
@@ -166,7 +163,13 @@ function parseModifier(
 		}
 	} else if (action.startsWith("ease-")) {
 		const rest = action.slice("ease-".length);
-		if (rest === "linear" || rest === "in" || rest === "out" || rest === "in-out" || rest === "bounce") {
+		if (
+			rest === "linear" ||
+			rest === "in" ||
+			rest === "out" ||
+			rest === "in-out" ||
+			rest === "bounce"
+		) {
 			target.easing = rest;
 			return true;
 		}
@@ -300,13 +303,19 @@ function applyModifiers(
 				easingFn = reanimatedEasing.linear;
 				break;
 			case "in":
-				easingFn = reanimatedEasing.in ? reanimatedEasing.in(reanimatedEasing.ease) : reanimatedEasing.ease;
+				easingFn = reanimatedEasing.in
+					? reanimatedEasing.in(reanimatedEasing.ease)
+					: reanimatedEasing.ease;
 				break;
 			case "out":
-				easingFn = reanimatedEasing.out ? reanimatedEasing.out(reanimatedEasing.ease) : reanimatedEasing.ease;
+				easingFn = reanimatedEasing.out
+					? reanimatedEasing.out(reanimatedEasing.ease)
+					: reanimatedEasing.ease;
 				break;
 			case "in-out":
-				easingFn = reanimatedEasing.inOut ? reanimatedEasing.inOut(reanimatedEasing.ease) : reanimatedEasing.ease;
+				easingFn = reanimatedEasing.inOut
+					? reanimatedEasing.inOut(reanimatedEasing.ease)
+					: reanimatedEasing.ease;
 				break;
 			case "bounce":
 				easingFn = reanimatedEasing.bounce;

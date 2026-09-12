@@ -9,6 +9,7 @@ export type {
 } from "nitro-wind-core";
 
 export {
+	AppearanceOverride,
 	ThemeTransitionPreset,
 	type ThemeTransitionOptions,
 	type TransitionOrigin,
@@ -61,6 +62,7 @@ export {
 	cancelActiveThemeTransition,
 	setNativeThemeTransitionForTesting,
 	type ActiveTransition,
+	type NativeThemeTransitionApi,
 } from "./transitions";
 
 export { useStyle } from "./useStyle";
@@ -169,13 +171,14 @@ export {
 
 export { NitroWindShowcase, type NitroWindShowcaseProps } from "./showcase";
 
-import type { ColorScheme, ThemeTransitionOptions, TailwindThemeConfig } from "nitro-wind-core";
+import type { ColorScheme, TailwindThemeConfig, ThemeTransitionOptions } from "nitro-wind-core";
+import { getActiveTheme, getHasAdaptiveThemes, setActiveTheme } from "./provider";
 import {
-	getActiveTheme,
-	getHasAdaptiveThemes,
-	setActiveTheme,
-} from "./provider";
-import { applyThemeTokens, loadTailwindConfig, loadTailwindCss, loadTailwindTheme } from "./themeConfig";
+	applyThemeTokens,
+	loadTailwindConfig,
+	loadTailwindCss,
+	loadTailwindTheme,
+} from "./themeConfig";
 import { getCSSVariable, updateCSSVariables } from "./variables";
 
 export const NitroWind = {
@@ -209,7 +212,7 @@ export const NitroWind = {
 	getCSSVariable(
 		name: string | string[],
 	): string | number | undefined | (string | number | undefined)[] {
-		return getCSSVariable(name as any);
+		return Array.isArray(name) ? getCSSVariable(name) : getCSSVariable(name);
 	},
 };
 

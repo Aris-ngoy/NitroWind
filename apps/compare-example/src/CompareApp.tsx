@@ -2,18 +2,13 @@ import {
 	BarChart3,
 	Loader2,
 	Palette,
-	RotateCw,
 	Rocket,
+	RotateCw,
 	Sparkles,
 	Trophy,
 	Zap,
 } from "lucide-react-native";
-import {
-	ThemeTransitionPreset,
-	computeStyle,
-	styled,
-	useNitroWind,
-} from "nitro-wind";
+import { ThemeTransitionPreset, computeStyle, styled, useNitroWind } from "nitro-wind";
 import {
 	Profiler,
 	type ProfilerOnRenderCallback,
@@ -25,8 +20,15 @@ import {
 } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { formatMs, formatOps, formatPerOp, now, runBenchmark, type BenchmarkResult } from "./bench";
-import { ITERATION_OPTIONS, LIST_SIZES, THEME_PALETTES, classes, createItems, styles } from "./catalog";
+import { type BenchmarkResult, formatMs, formatOps, formatPerOp, now, runBenchmark } from "./bench";
+import {
+	ITERATION_OPTIONS,
+	LIST_SIZES,
+	THEME_PALETTES,
+	classes,
+	createItems,
+	styles,
+} from "./catalog";
 import { ENGINES, type EngineId } from "./engines";
 import { NativewindScreen } from "./engines/nativewind/Screen";
 import { NitrowindScreen } from "./engines/nitrowind/Screen";
@@ -135,7 +137,8 @@ export default function CompareApp() {
 				color: "#e11d48",
 			},
 		];
-		const template = templates[(nextAnimId.current - 5) % templates.length]!;
+		const template = templates[(nextAnimId.current - 5) % templates.length];
+		if (template == null) return;
 		const newId = String(nextAnimId.current++);
 		setAnimCards((prev) => [...prev, { id: newId, ...template }]);
 	};
@@ -339,14 +342,14 @@ export default function CompareApp() {
 								},
 							]}
 							onPress={() => {
-								const allThemes: Array<"dark" | "light" | "coffee" | "emerald" | "ocean"> = [
+								const allThemes: readonly string[] = [
 									"dark",
 									"light",
 									"coffee",
 									"emerald",
 									"ocean",
 								];
-								const currentIndex = allThemes.indexOf(theme as any);
+								const currentIndex = allThemes.indexOf(theme);
 								const next = allThemes[(currentIndex + 1) % allThemes.length] ?? "dark";
 								setTheme(next, {
 									preset: selectedPreset,
@@ -360,7 +363,12 @@ export default function CompareApp() {
 									{ backgroundColor: palette.accent, borderColor: palette.chipBorder },
 								]}
 							/>
-							<Text style={[styles.animThemeBtnText, { color: palette.text, textTransform: "capitalize" }]}>
+							<Text
+								style={[
+									styles.animThemeBtnText,
+									{ color: palette.text, textTransform: "capitalize" },
+								]}
+							>
 								{theme}
 							</Text>
 						</Pressable>
@@ -406,7 +414,11 @@ export default function CompareApp() {
 				<View style={[styles.panel, { backgroundColor: palette.bg }]}>
 					{/* Current Engine Metadata */}
 					<View style={styles.panelTopRow}>
-						<Text style={[styles.panelLabel, { color: palette.text }]} numberOfLines={1} ellipsizeMode="tail">
+						<Text
+							style={[styles.panelLabel, { color: palette.text }]}
+							numberOfLines={1}
+							ellipsizeMode="tail"
+						>
 							{meta.label} · {meta.runtime}
 						</Text>
 						{resolveWinnerId === engine ? (
@@ -452,7 +464,10 @@ export default function CompareApp() {
 							onPress={() => setActiveView("resolve")}
 						>
 							<View style={styles.segmentBtnRow}>
-								<Zap size={13} color={activeView === "resolve" ? "#ffffff" : palette.textSecondary} />
+								<Zap
+									size={13}
+									color={activeView === "resolve" ? "#ffffff" : palette.textSecondary}
+								/>
 								<Text
 									style={[
 										styles.segmentBtnText,
@@ -476,7 +491,10 @@ export default function CompareApp() {
 							onPress={() => setActiveView("render")}
 						>
 							<View style={styles.segmentBtnRow}>
-								<Palette size={13} color={activeView === "render" ? "#ffffff" : palette.textSecondary} />
+								<Palette
+									size={13}
+									color={activeView === "render" ? "#ffffff" : palette.textSecondary}
+								/>
 								<Text
 									style={[
 										styles.segmentBtnText,
@@ -500,7 +518,10 @@ export default function CompareApp() {
 							onPress={() => setActiveView("scorecard")}
 						>
 							<View style={styles.segmentBtnRow}>
-								<BarChart3 size={13} color={activeView === "scorecard" ? "#ffffff" : palette.textSecondary} />
+								<BarChart3
+									size={13}
+									color={activeView === "scorecard" ? "#ffffff" : palette.textSecondary}
+								/>
 								<Text
 									style={[
 										styles.segmentBtnText,
@@ -524,7 +545,10 @@ export default function CompareApp() {
 							onPress={() => setActiveView("animations")}
 						>
 							<View style={styles.segmentBtnRow}>
-								<Sparkles size={13} color={activeView === "animations" ? "#ffffff" : palette.textSecondary} />
+								<Sparkles
+									size={13}
+									color={activeView === "animations" ? "#ffffff" : palette.textSecondary}
+								/>
 								<Text
 									style={[
 										styles.segmentBtnText,
@@ -718,14 +742,21 @@ export default function CompareApp() {
 										}
 									>
 										{renderMetrics[engine]?.paintMs
-											? `${(renderMetrics[engine]!.paintMs / listCount).toFixed(2)} ms/row`
+											? `${((renderMetrics[engine]?.paintMs ?? 0) / listCount).toFixed(2)} ms/row`
 											: "Mount to onLayout"}
 									</Text>
 								</View>
 
-								<View style={[styles.metricCard, { backgroundColor: palette.cardBg, borderColor: palette.cardBorder }]}>
+								<View
+									style={[
+										styles.metricCard,
+										{ backgroundColor: palette.cardBg, borderColor: palette.cardBorder },
+									]}
+								>
 									<View style={styles.metricCardHeader}>
-										<Text style={[styles.metricCardTitle, { color: palette.textSecondary }]}>React Render</Text>
+										<Text style={[styles.metricCardTitle, { color: palette.textSecondary }]}>
+											React Render
+										</Text>
 									</View>
 									<Text style={[styles.metricCardValue, { color: palette.text }]}>
 										{formatMs(renderMetrics[engine]?.actualDuration)}
@@ -735,21 +766,37 @@ export default function CompareApp() {
 									</Text>
 								</View>
 
-								<View style={[styles.metricCard, { backgroundColor: palette.cardBg, borderColor: palette.cardBorder }]}>
+								<View
+									style={[
+										styles.metricCard,
+										{ backgroundColor: palette.cardBg, borderColor: palette.cardBorder },
+									]}
+								>
 									<View style={styles.metricCardHeader}>
-										<Text style={[styles.metricCardTitle, { color: palette.textSecondary }]}>Commits</Text>
+										<Text style={[styles.metricCardTitle, { color: palette.textSecondary }]}>
+											Commits
+										</Text>
 									</View>
 									<Text style={[styles.metricCardValue, { color: palette.text }]}>
 										{renderMetrics[engine]?.renderCount ?? 0}×
 									</Text>
-									<Text style={[styles.metricCardSub, { color: palette.textSecondary }]}>Profiler updates</Text>
+									<Text style={[styles.metricCardSub, { color: palette.textSecondary }]}>
+										Profiler updates
+									</Text>
 								</View>
 							</View>
 
 							{/* Relative Render Time Comparison */}
-							<View style={[styles.chartContainer, { backgroundColor: palette.cardBg, borderColor: palette.cardBorder }]}>
+							<View
+								style={[
+									styles.chartContainer,
+									{ backgroundColor: palette.cardBg, borderColor: palette.cardBorder },
+								]}
+							>
 								<View style={styles.chartTitleRow}>
-									<Text style={[styles.chartTitle, { color: palette.text }]}>List Layout Paint ({listCount} rows)</Text>
+									<Text style={[styles.chartTitle, { color: palette.text }]}>
+										List Layout Paint ({listCount} rows)
+									</Text>
 									<Text style={[styles.chartTitle, { color: "#4ade80" }]}>Lower is faster</Text>
 								</View>
 								{ENGINES.map((item) => {
@@ -774,7 +821,9 @@ export default function CompareApp() {
 													<Text
 														style={[
 															isWinner ? styles.chartRowLabelWinner : styles.chartRowLabel,
-															isWinner ? { color: "#ffffff", fontWeight: "800" } : { color: palette.textSecondary },
+															isWinner
+																? { color: "#ffffff", fontWeight: "800" }
+																: { color: palette.textSecondary },
 														]}
 														numberOfLines={1}
 														ellipsizeMode="tail"
@@ -784,13 +833,22 @@ export default function CompareApp() {
 													{isWinner ? <Trophy size={12} color="#facc15" /> : null}
 												</View>
 												<Text
-													style={[styles.chartRowValue, isWinner ? { color: "#ffffff" } : { color: palette.text }]}
+													style={[
+														styles.chartRowValue,
+														isWinner ? { color: "#ffffff" } : { color: palette.text },
+													]}
 													numberOfLines={1}
 												>
 													{formatMs(paint)}
 												</Text>
 											</View>
-											<View style={[styles.barTrack, { backgroundColor: palette.chipBg }, isWinner && { backgroundColor: "#14532d" }]}>
+											<View
+												style={[
+													styles.barTrack,
+													{ backgroundColor: palette.chipBg },
+													isWinner && { backgroundColor: "#14532d" },
+												]}
+											>
 												<View
 													style={[
 														isWinner
@@ -819,9 +877,16 @@ export default function CompareApp() {
 
 					{/* VIEW 3: HEAD-TO-HEAD SCORECARD */}
 					{activeView === "scorecard" ? (
-						<View style={[styles.chartContainer, { backgroundColor: palette.cardBg, borderColor: palette.cardBorder }]}>
+						<View
+							style={[
+								styles.chartContainer,
+								{ backgroundColor: palette.cardBg, borderColor: palette.cardBorder },
+							]}
+						>
 							<View style={styles.chartTitleRow}>
-								<Text style={[styles.chartTitle, { color: palette.text }]}>Engine Performance Scorecard</Text>
+								<Text style={[styles.chartTitle, { color: palette.text }]}>
+									Engine Performance Scorecard
+								</Text>
 							</View>
 
 							{ENGINES.map((item) => {
@@ -859,7 +924,9 @@ export default function CompareApp() {
 												<Text
 													style={[
 														isAnyWinner ? styles.chartRowLabelWinner : styles.chartRowLabel,
-														isAnyWinner ? { color: "#ffffff", fontWeight: "800", fontSize: 13 } : { color: palette.text },
+														isAnyWinner
+															? { color: "#ffffff", fontWeight: "800", fontSize: 13 }
+															: { color: palette.text },
 													]}
 													numberOfLines={1}
 													ellipsizeMode="tail"
@@ -880,15 +947,35 @@ export default function CompareApp() {
 											</Text>
 										</View>
 										<View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-											<Text style={{ color: isAnyWinner ? "#dcfce7" : palette.textSecondary, fontSize: 11 }}>
+											<Text
+												style={{
+													color: isAnyWinner ? "#dcfce7" : palette.textSecondary,
+													fontSize: 11,
+												}}
+											>
 												Resolve:{" "}
-												<Text style={{ color: isAnyWinner ? "#ffffff" : palette.text, fontWeight: "700" }}>
+												<Text
+													style={{
+														color: isAnyWinner ? "#ffffff" : palette.text,
+														fontWeight: "700",
+													}}
+												>
 													{formatMs(res?.totalMs)} ({formatOps(res?.opsPerSec)})
 												</Text>
 											</Text>
-											<Text style={{ color: isAnyWinner ? "#dcfce7" : palette.textSecondary, fontSize: 11 }}>
+											<Text
+												style={{
+													color: isAnyWinner ? "#dcfce7" : palette.textSecondary,
+													fontSize: 11,
+												}}
+											>
 												Paint:{" "}
-												<Text style={{ color: isAnyWinner ? "#ffffff" : palette.text, fontWeight: "700" }}>
+												<Text
+													style={{
+														color: isAnyWinner ? "#ffffff" : palette.text,
+														fontWeight: "700",
+													}}
+												>
 													{formatMs(ren?.paintMs)}
 												</Text>
 											</Text>
@@ -903,18 +990,30 @@ export default function CompareApp() {
 					{activeView === "animations" ? (
 						<View>
 							{/* Theme Transitions Demo */}
-							<View style={[styles.animContainer, { backgroundColor: palette.cardBg, borderColor: palette.cardBorder }]}>
-								<Text style={[styles.animSectionTitle, { color: palette.accent }]}>Theme Transition Presets</Text>
+							<View
+								style={[
+									styles.animContainer,
+									{ backgroundColor: palette.cardBg, borderColor: palette.cardBorder },
+								]}
+							>
+								<Text style={[styles.animSectionTitle, { color: palette.accent }]}>
+									Theme Transition Presets
+								</Text>
 								<Text style={[styles.animHeadline, { color: palette.text }]}>
 									Animated Theme Transitions (Active:{" "}
 									<Text style={{ color: palette.accent }}>{theme}</Text>)
 								</Text>
 								<Text style={[styles.animSubtext, { color: palette.textSecondary }]}>
-									Select a preset, then tap any theme to trigger a smooth native overlay or web
-									view transition.
+									Select a preset, then tap any theme to trigger a smooth native overlay or web view
+									transition.
 								</Text>
 
-								<Text style={[styles.subControlLabel, { color: palette.textSecondary, marginBottom: 6 }]}>
+								<Text
+									style={[
+										styles.subControlLabel,
+										{ color: palette.textSecondary, marginBottom: 6 },
+									]}
+								>
 									Transition Preset:
 								</Text>
 								<View style={styles.animChipRow}>
@@ -926,7 +1025,10 @@ export default function CompareApp() {
 												style={[
 													styles.animChip,
 													{ backgroundColor: palette.chipBg, borderColor: palette.chipBorder },
-													isSelected && { backgroundColor: palette.accent, borderColor: palette.accent },
+													isSelected && {
+														backgroundColor: palette.accent,
+														borderColor: palette.accent,
+													},
 												]}
 												onPress={() => setSelectedPreset(p.preset)}
 											>
@@ -944,7 +1046,12 @@ export default function CompareApp() {
 									})}
 								</View>
 
-								<Text style={[styles.subControlLabel, { color: palette.textSecondary, marginBottom: 6 }]}>
+								<Text
+									style={[
+										styles.subControlLabel,
+										{ color: palette.textSecondary, marginBottom: 6 },
+									]}
+								>
 									Switch Theme:
 								</Text>
 								<View style={styles.animChipRow}>
@@ -956,11 +1063,12 @@ export default function CompareApp() {
 												style={[
 													styles.animThemeBtn,
 													{ backgroundColor: palette.chipBg, borderColor: palette.chipBorder },
-													isActive && { borderColor: palette.accent, backgroundColor: palette.cardBg },
+													isActive && {
+														borderColor: palette.accent,
+														backgroundColor: palette.cardBg,
+													},
 												]}
-												onPress={() =>
-													setTheme(t.id, { preset: selectedPreset, duration: 400 })
-												}
+												onPress={() => setTheme(t.id, { preset: selectedPreset, duration: 400 })}
 											>
 												<View
 													style={[
@@ -972,7 +1080,9 @@ export default function CompareApp() {
 														},
 													]}
 												/>
-												<Text style={[styles.animThemeBtnText, { color: palette.text }]}>{t.label}</Text>
+												<Text style={[styles.animThemeBtnText, { color: palette.text }]}>
+													{t.label}
+												</Text>
 											</Pressable>
 										);
 									})}
@@ -980,8 +1090,15 @@ export default function CompareApp() {
 							</View>
 
 							{/* Reanimated ClassName Animations */}
-							<View style={[styles.animContainer, { backgroundColor: palette.cardBg, borderColor: palette.cardBorder }]}>
-								<Text style={[styles.animSectionTitle, { color: palette.accent }]}>Reanimated ClassName Animations</Text>
+							<View
+								style={[
+									styles.animContainer,
+									{ backgroundColor: palette.cardBg, borderColor: palette.cardBorder },
+								]}
+							>
+								<Text style={[styles.animSectionTitle, { color: palette.accent }]}>
+									Reanimated ClassName Animations
+								</Text>
 								<Text style={[styles.animHeadline, { color: palette.text }]}>
 									Entering, Exiting & Layout Spring Transitions
 								</Text>
@@ -996,16 +1113,30 @@ export default function CompareApp() {
 										<Text style={styles.btnActionText}>+ Add Card</Text>
 									</Pressable>
 									<Pressable
-										style={[styles.btnActionSecondary, { backgroundColor: palette.chipBg, borderColor: palette.chipBorder }]}
+										style={[
+											styles.btnActionSecondary,
+											{ backgroundColor: palette.chipBg, borderColor: palette.chipBorder },
+										]}
 										onPress={shuffleAnimCards}
 									>
-										<Text style={[styles.btnActionTextSecondary, { color: palette.text }]}>🔀 Reorder</Text>
+										<Text style={[styles.btnActionTextSecondary, { color: palette.text }]}>
+											🔀 Reorder
+										</Text>
 									</Pressable>
 									<Pressable
-										style={[styles.btnActionSecondary, { backgroundColor: palette.chipBg, borderColor: palette.chipBorder, flex: 0.6 }]}
+										style={[
+											styles.btnActionSecondary,
+											{
+												backgroundColor: palette.chipBg,
+												borderColor: palette.chipBorder,
+												flex: 0.6,
+											},
+										]}
 										onPress={() => setAnimCards(DEMO_CARDS)}
 									>
-										<Text style={[styles.btnActionTextSecondary, { color: palette.text }]}>Reset</Text>
+										<Text style={[styles.btnActionTextSecondary, { color: palette.text }]}>
+											Reset
+										</Text>
 									</Pressable>
 								</View>
 
@@ -1047,18 +1178,25 @@ export default function CompareApp() {
 							</Text>
 						</Pressable>
 						<Pressable
-							style={[styles.btnActionSecondary, { backgroundColor: palette.chipBg, borderColor: palette.chipBorder }]}
+							style={[
+								styles.btnActionSecondary,
+								{ backgroundColor: palette.chipBg, borderColor: palette.chipBorder },
+							]}
 							onPress={testRemount}
 						>
 							<RotateCw size={14} color={palette.textSecondary} />
-							<Text style={[styles.btnActionTextSecondary, { color: palette.text }]}>Re-render Screen</Text>
+							<Text style={[styles.btnActionTextSecondary, { color: palette.text }]}>
+								Re-render Screen
+							</Text>
 						</Pressable>
 					</View>
 
 					{/* Config Selectors: Iterations & Row Count */}
 					<View style={[styles.subControlRow, { borderTopColor: palette.cardBorder }]}>
 						<View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-							<Text style={[styles.subControlLabel, { color: palette.textSecondary }]}>Resolves:</Text>
+							<Text style={[styles.subControlLabel, { color: palette.textSecondary }]}>
+								Resolves:
+							</Text>
 							<View style={[styles.miniSelector, { backgroundColor: palette.bg }]}>
 								{ITERATION_OPTIONS.map((val) => (
 									<Pressable

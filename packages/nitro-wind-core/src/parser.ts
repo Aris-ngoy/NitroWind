@@ -500,12 +500,13 @@ export function variantMatches(variant: string, context: StyleContext): boolean 
 			return context.groupFocus;
 		case "group-hover":
 			return context.groupHover;
-		default:
+		default: {
 			const breakpoint = resolveBreakpoint(variant);
 			if (breakpoint != null) {
 				return context.width >= breakpoint;
 			}
 			return variant === context.colorScheme;
+		}
 	}
 }
 

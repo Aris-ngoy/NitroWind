@@ -461,7 +461,11 @@ let replaceRadius = false;
 let replaceFontSize = false;
 let replaceBreakpoints = false;
 
-function assignOverlay<T>(target: Record<string, T>, source: Record<string, T> | undefined, clear: boolean): void {
+function assignOverlay<T>(
+	target: Record<string, T>,
+	source: Record<string, T> | undefined,
+	clear: boolean,
+): void {
 	if (clear) {
 		for (const key of Object.keys(target)) delete target[key];
 	}

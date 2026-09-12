@@ -16,7 +16,11 @@ export function now(): number {
 /**
  * Runs a benchmark with warmup and multiple samples to minimize JIT/GC noise.
  */
-export function runBenchmark(iterations: number, fn: () => void, samplesCount = 5): BenchmarkResult {
+export function runBenchmark(
+	iterations: number,
+	fn: () => void,
+	samplesCount = 5,
+): BenchmarkResult {
 	// Warmup runs
 	const warmupCount = Math.min(Math.max(Math.floor(iterations * 0.1), 10), 200);
 	for (let w = 0; w < warmupCount; w++) {

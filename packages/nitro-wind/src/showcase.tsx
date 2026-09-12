@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { type GestureResponderEvent, Pressable, ScrollView, Text, View } from "react-native";
 import { isNativeEngineAvailable } from "./engine";
 import { useNitroWind } from "./provider";
 import { styled } from "./styled";
@@ -87,9 +87,7 @@ function ThemeTransitionsDemo() {
 							onPress={() => setActivePreset(item.preset)}
 						>
 							<Label
-								className={`text-xs font-semibold ${
-									isSelected ? "text-white" : "text-slate-300"
-								}`}
+								className={`text-xs font-semibold ${isSelected ? "text-white" : "text-slate-300"}`}
 							>
 								{item.name}
 							</Label>
@@ -111,8 +109,8 @@ function ThemeTransitionsDemo() {
 									? "border-sky-400 bg-slate-700"
 									: "border-slate-600 bg-slate-900 active:bg-slate-700"
 							}`}
-							onPress={(e: any) => {
-								const { pageX, pageY } = e?.nativeEvent ?? {};
+							onPress={(e: GestureResponderEvent) => {
+								const { pageX, pageY } = e.nativeEvent;
 								const origin = pageX != null && pageY != null ? { x: pageX, y: pageY } : undefined;
 								setTheme(t.id, { preset: activePreset, duration: 400, origin });
 							}}
@@ -201,7 +199,8 @@ function ReanimatedAnimationsDemo() {
 				color: "bg-rose-600",
 			},
 		];
-		const template = templates[(nextId - 5) % templates.length]!;
+		const template = templates[(nextId - 5) % templates.length];
+		if (template == null) return;
 		const newId = String(nextId++);
 		setCards((prev) => [...prev, { id: newId, ...template }]);
 	};
@@ -261,9 +260,7 @@ function ReanimatedAnimationsDemo() {
 					>
 						<Box className="flex-1 mr-2">
 							<Body className="text-white font-bold text-sm">{card.title}</Body>
-							<Body className="text-white/80 text-[10px] font-mono mt-0.5">
-								{card.tag}
-							</Body>
+							<Body className="text-white/80 text-[10px] font-mono mt-0.5">{card.tag}</Body>
 						</Box>
 						<Button
 							className="rounded-lg bg-black/20 px-2 py-1 active:bg-black/40"

@@ -1,18 +1,22 @@
 import {
+	type TailwindThemeConfig,
+	type TailwindThemeSources,
+	type ThemeTokenScale,
 	applyThemeTokens as applyCoreThemeTokens,
 	flattenTailwindCss,
 	flattenTailwindSources,
 	flattenTailwindTheme,
 	resetThemeTokens,
-	type TailwindThemeConfig,
-	type TailwindThemeSources,
-	type ThemeTokenScale,
 } from "nitro-wind-core";
 import { registerNativeThemeTokens } from "./engine";
 
 export type { TailwindThemeConfig, TailwindThemeSources, ThemeTokenScale };
 
-function writeEntries(lines: string[], kind: string, values: Record<string, string | number> | undefined): void {
+function writeEntries(
+	lines: string[],
+	kind: string,
+	values: Record<string, string | number> | undefined,
+): void {
 	if (!values) return;
 	for (const [key, value] of Object.entries(values)) {
 		lines.push(`${kind}\t${key}\t${value}`);
@@ -40,7 +44,9 @@ export function applyThemeTokens(tokens: ThemeTokenScale, reset = false): void {
 	registerNativeThemeTokens(serializeThemePayload(tokens, reset));
 }
 
-export function loadTailwindConfig(config: TailwindThemeConfig | null | undefined): ThemeTokenScale {
+export function loadTailwindConfig(
+	config: TailwindThemeConfig | null | undefined,
+): ThemeTokenScale {
 	return loadTailwindTheme({ config });
 }
 
