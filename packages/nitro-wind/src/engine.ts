@@ -234,6 +234,12 @@ export function clearEngineCache(): void {
 	resetPublicCache();
 }
 
+export function registerNativeThemeTokens(payload: string): void {
+	getNativeEngine()?.registerThemeTokens(payload);
+	jsEngine.clearCache();
+	resetPublicCache();
+}
+
 export function computeStaticStyle(className: string): PublicStyleResult["style"] {
 	return computeStyle(className).style;
 }

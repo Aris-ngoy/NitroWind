@@ -17,6 +17,7 @@ namespace margelo::nitro::nitrowind {
       prototype.registerHybridMethod("compute", &HybridStyleEngineSpec::compute);
       prototype.registerHybridMethod("computeBatch", &HybridStyleEngineSpec::computeBatch);
       prototype.registerHybridMethod("setThemeName", &HybridStyleEngineSpec::setThemeName);
+      prototype.registerHybridMethod("registerThemeTokens", &HybridStyleEngineSpec::registerThemeTokens);
       prototype.registerHybridMethod("clearCache", &HybridStyleEngineSpec::clearCache);
       prototype.registerHybridMethod("getCacheSize", &HybridStyleEngineSpec::getCacheSize);
     });

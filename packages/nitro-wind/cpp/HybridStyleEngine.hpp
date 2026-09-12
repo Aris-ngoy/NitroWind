@@ -32,6 +32,7 @@ public:
       const StyleContext& context) override;
 
   void setThemeName(const std::string& name) override;
+  void registerThemeTokens(const std::string& payload) override;
   void clearCache() override;
   double getCacheSize() override;
 

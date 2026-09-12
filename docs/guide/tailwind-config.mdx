@@ -1,0 +1,156 @@
+---
+title: "Theme config"
+description: "Customize colors and scales with Tailwind v4 @theme CSS or a v3 tailwind.config.js."
+keywords: ["tailwind.config.js", "@theme", "tailwind v4", "theme.extend", "colors", "brand"]
+---
+
+nitro-wind reads **Tailwind v4 `@theme`** in a CSS file and **Tailwind v3 `theme.extend`** in `tailwind.config.js`. Both become real utilities: `bg-brand-500`, `p-18`, `rounded-4xl`.
+
+It does **not** run the Tailwind compiler, plugins, `content` scanning, or `@plugin`. You still write class strings; the engine resolves them.
+
+## Tailwind v4 (`@theme`)
+
+Put `global.css` at the project root (or `src/global.css`, `app/global.css`). The Babel plugin finds `@theme` and registers the namespaces below. You do **not** import this file in React Native.
+
+```css global.css
+@import "tailwindcss";
+
+@theme {
+  --color-brand: #4f46e5;
+  --color-brand-500: #4f46e5;
+  --color-brand-600: #4338ca;
+  --color-mint-500: oklch(0.72 0.11 178);
+  --spacing-18: 4.5rem;
+  --radius-4xl: 2rem;
+  --text-xxs: 10px;
+  --breakpoint-xs: 400px;
+}
+```
+
+`oklch()` and `hsl()` are converted to hex/rgba so React Native can paint them.
+
+Point at a file explicitly: `["nitro-wind/babel", { css: "./global.css" }]`.
+
+`@config "./tailwind.config.js"` in that CSS file is honored if no JS config was already found. Local `@import "./colors.css"` files that contain `@theme` are followed. `@import "tailwindcss"` is ignored.
+
+## Tailwind v3 (`tailwind.config.js`)
+
+```js tailwind.config.js
+/** @type {import('nitro-wind').TailwindThemeConfig} */
+module.exports = {
+  theme: {
+    extend: {
+      colors: {
+        brand: {
+          DEFAULT: "#4F46E5",
+          500: "#4F46E5",
+          600: "#4338CA",
+        },
+        primary: "#16a34a",
+      },
+      spacing: {
+        18: "4.5rem",
+      },
+      borderRadius: {
+        "4xl": "2rem",
+      },
+      fontSize: {
+        xxs: "10px",
+      },
+      screens: {
+        xs: "400px",
+      },
+    },
+  },
+};
+```
+
+```tsx
+<View className="rounded-4xl bg-brand-500 p-18 xs:p-6">
+  <Text className="text-xxs text-white">Brand</Text>
+</View>
+```
+
+Restart Metro after you change either file. The Babel plugin reads them when it starts.
+
+<Info>
+  Keep `plugins: ["nitro-wind/babel"]`. Optional paths: `{ css: "./global.css", config: "./tailwind.config.js" }`. If both files exist, tokens are merged (JS keys win on conflict).
+</Info>
+
+## What maps to utilities
+
+| v4 `@theme` | v3 `theme.extend` | Utilities |
+| --- | --- | --- |
+| `--color-brand-500` | `colors.brand.500` | `bg-brand-500`, `text-brand-500`, `border-brand-500` |
+| `--color-brand` | `colors.brand.DEFAULT` | `bg-brand`, `text-brand` |
+| `--color-primary` | `colors.primary` | `bg-primary` |
+| `--spacing-18` | `spacing.18` | `p-18`, `m-18`, `gap-18`, `w-18` |
+| `--radius-4xl` | `borderRadius.4xl` | `rounded-4xl` |
+| `--text-xxs` | `fontSize.xxs` | `text-xxs` |
+| `--breakpoint-xs` | `screens.xs` | `xs:` |
+
+`--color-*: initial` (and the same for spacing, radius, text, breakpoint) replaces that built-in scale, matching Tailwind v4.
+
+Lengths accept rem (×16), px, or a raw number. `fontSize` can be a string or Tailwind's `[size, { lineHeight }]` tuple — only the size is used.
+
+Function form works for colors that copy a built-in scale:
+
+```js
+theme: {
+  extend: {
+    colors: ({ colors }) => ({
+      brand: colors.indigo,
+    }),
+  },
+}
+```
+
+`bg-brand-600` then resolves to the same hex as `bg-indigo-600`.
+
+## Extend vs replace
+
+`theme.extend.*` **adds** tokens. Built-in palettes stay (`bg-red-500` still works).
+
+`theme.colors` (without `extend`) **replaces** the built-in color table. Only the colors you list resolve. Same for `theme.spacing`, `theme.borderRadius`, `theme.fontSize`, and `theme.screens`.
+
+Prefer `extend` unless you intend to drop the defaults.
+
+## Load the theme in code
+
+Use this in tests, or if you generate tokens at runtime. Call it **before** the first `className` is resolved (module top level, not inside `useEffect`).
+
+```ts
+import { NitroWind } from "nitro-wind";
+import tailwindConfig from "./tailwind.config";
+
+NitroWind.loadTailwindCss(`@theme { --color-brand: #4F46E5; }`);
+NitroWind.loadTailwindConfig(tailwindConfig);
+NitroWind.loadTailwindTheme({
+  css: `@theme { --color-brand: #4F46E5; }`,
+  config: tailwindConfig,
+});
+```
+
+`applyThemeTokens` is the lower-level form if you already flattened keys (`brand-500` → `#4F46E5`).
+
+## Not compiled
+
+| Tailwind | nitro-wind |
+| --- | --- |
+| `content` / file scanning | Not used. You write class strings. |
+| `@plugin` / `plugins` | Not loaded. |
+| `presets` | Not loaded. |
+| `@source` | Not used. |
+| `darkMode` | Use `dark:` / `light:` and `NitroWind.setTheme`. |
+| `--font-*` (font files) | Set `style={{ fontFamily }}` after loading the typeface. |
+
+Arbitrary values still work without a config: `bg-[#4F46E5]`.
+
+<Columns cols={2}>
+  <Card title="Theming basics" icon="sun-moon" href="/guide/theming">
+    Light, dark, system, and built-in scales.
+  </Card>
+  <Card title="Custom themes" icon="swatch-book" href="/guide/custom-themes">
+    Named themes (`premium`, `ocean`) and CSS variables.
+  </Card>
+</Columns>

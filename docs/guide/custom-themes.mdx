@@ -1,0 +1,303 @@
+---
+title: "Custom themes"
+description: "Go beyond light and dark. Named themes, CSS variables, and theme-name class prefixes."
+keywords: ["custom themes", "css variables", "premium", "ocean", "updateCSSVariables"]
+---
+
+While nitro-wind provides `light` and `dark` (and `system`) by default, you can add any number of named themes: branding, seasonal modes, accessibility, white-label skins.
+
+There is no `global.css` and no Metro `extraThemes` array. Add brand **utilities** (`bg-brand-500`) in [tailwind.config.js](/guide/tailwind-config). For named modes beyond light and dark (`premium`, `ocean`), define each theme as a TypeScript variable bag, register it with `updateCSSVariables`, and switch with `NitroWind.setTheme("premium")`.
+
+<Info>
+  Every theme should define the **same** variable names. If you add `--color-primary` to `light`, add it to `dark` and to every extra theme.
+</Info>
+
+## Create a custom theme
+
+Three steps: define the bags, register them once at startup, then switch.
+
+### 1. Define the same variables on every theme
+
+```ts theme.ts
+import { NitroWind } from "nitro-wind";
+
+export const themes = {
+  light: {
+    "--color-background": "#ffffff",
+    "--color-foreground": "#18181b",
+    "--color-primary": "#4F46E5",
+    "--color-card": "#ffffff",
+    "--color-border": "#e4e4e7",
+  },
+  dark: {
+    "--color-background": "#09090b",
+    "--color-foreground": "#fafafa",
+    "--color-primary": "#818CF8",
+    "--color-card": "#18181b",
+    "--color-border": "#3f3f46",
+  },
+  premium: {
+    "--color-background": "#1e1b4b",
+    "--color-foreground": "#fef3c7",
+    "--color-primary": "#fbbf24",
+    "--color-card": "#312e81",
+    "--color-border": "#4c1d95",
+  },
+} as const;
+
+export type AppTheme = keyof typeof themes;
+
+export function registerThemes() {
+  for (const [name, variables] of Object.entries(themes)) {
+    NitroWind.updateCSSVariables(name, variables);
+  }
+}
+```
+
+Names must start with `--`. In development, a name without the prefix is skipped and logged.
+
+### 2. Register at app start
+
+Call `registerThemes()` next to `NitroWindProvider`. No Metro restart.
+
+```tsx App.tsx
+import { NitroWindProvider } from "nitro-wind";
+import { registerThemes } from "./theme";
+
+registerThemes();
+
+export default function App() {
+  return (
+    <NitroWindProvider>
+      <Home />
+    </NitroWindProvider>
+  );
+}
+```
+
+### 3. Switch to the theme
+
+```tsx
+import { NitroWind } from "nitro-wind";
+
+NitroWind.setTheme("premium");
+```
+
+## Style against the active theme
+
+Use two tools together.
+
+### Theme-name prefixes
+
+Any string you pass to `setTheme` is also a class variant. `premium:` matches only while that theme is active — the same idea as Uniwind's `@variant premium`, without a CSS file.
+
+```tsx
+<View className="bg-white dark:bg-zinc-950 premium:bg-indigo-950">
+  <Text className="text-zinc-900 dark:text-white premium:text-amber-100">
+    Hello
+  </Text>
+</View>
+```
+
+`dark:` / `light:` only match when the active name is `dark` or `light`. On `premium`, those prefixes are skipped. Put extra-theme colors on `premium:` (or read CSS variables below).
+
+### CSS variables
+
+React Native does not understand `bg-[var(--color-primary)]`. Read the token and apply it on `style`.
+
+```tsx
+import { useCSSVariable } from "nitro-wind";
+import { Pressable, Text, View } from "react-native";
+
+export function BrandCard() {
+  const [background, foreground, primary, card, border] = useCSSVariable([
+    "--color-background",
+    "--color-foreground",
+    "--color-primary",
+    "--color-card",
+    "--color-border",
+  ]);
+
+  return (
+    <View className="flex-1 p-4" style={{ backgroundColor: background }}>
+      <View
+        className="rounded-2xl p-4"
+        style={{ backgroundColor: card, borderColor: border, borderWidth: 1 }}
+      >
+        <Text className="text-base font-semibold" style={{ color: foreground }}>
+          Brand surface
+        </Text>
+        <Pressable
+          className="mt-3 items-center rounded-xl px-4 py-2"
+          style={{ backgroundColor: primary }}
+        >
+          <Text className="font-bold text-white">Continue</Text>
+        </Pressable>
+      </View>
+    </View>
+  );
+}
+```
+
+`useCSSVariable` follows `NitroWind.currentTheme`. After `setTheme("premium")` it returns the premium bag.
+
+Override one subtree:
+
+```tsx
+import { ScopedVariables } from "nitro-wind";
+
+<ScopedVariables variables={{ "--color-primary": "#e11d48" }}>
+  <BrandCard />
+</ScopedVariables>
+```
+
+`NitroWind.getCSSVariable("--color-primary")` is the non-hook form.
+
+## Update variables at runtime
+
+Use this for user-picked accents, white-label skins, or a theme editor. Changes are stored **per theme** and survive switching away and back.
+
+```tsx
+import { NitroWind } from "nitro-wind";
+
+NitroWind.updateCSSVariables("light", {
+  "--color-primary": "#ff6b6b",
+});
+
+NitroWind.updateCSSVariables(NitroWind.currentTheme, {
+  "--color-primary": "#0077be",
+  "--color-background": "#e0f7fa",
+});
+```
+
+<Tip>
+  Updating an inactive theme stores the values but does not re-render until that theme is selected.
+</Tip>
+
+## Multiple themes
+
+```ts
+export const themes = {
+  light: {
+    "--color-background": "#ffffff",
+    "--color-foreground": "#18181b",
+    "--color-primary": "#4F46E5",
+    "--color-card": "#ffffff",
+    "--color-border": "#e4e4e7",
+  },
+  dark: {
+    "--color-background": "#09090b",
+    "--color-foreground": "#fafafa",
+    "--color-primary": "#818CF8",
+    "--color-card": "#18181b",
+    "--color-border": "#3f3f46",
+  },
+  ocean: {
+    "--color-background": "#082f49",
+    "--color-foreground": "#e0f2fe",
+    "--color-primary": "#38bdf8",
+    "--color-card": "#0c4a6e",
+    "--color-border": "#0369a1",
+  },
+  sunset: {
+    "--color-background": "#431407",
+    "--color-foreground": "#ffedd5",
+    "--color-primary": "#f97316",
+    "--color-card": "#7c2d12",
+    "--color-border": "#c2410c",
+  },
+  forest: {
+    "--color-background": "#052e16",
+    "--color-foreground": "#dcfce7",
+    "--color-primary": "#22c55e",
+    "--color-card": "#14532d",
+    "--color-border": "#15803d",
+  },
+  "high-contrast": {
+    "--color-background": "#000000",
+    "--color-foreground": "#ffffff",
+    "--color-primary": "#facc15",
+    "--color-card": "#171717",
+    "--color-border": "#ffffff",
+  },
+} as const;
+```
+
+```tsx
+import { NitroWind, useNitroWind } from "nitro-wind";
+import { Pressable, ScrollView, Text, View } from "react-native";
+
+const choices = [
+  { name: "light", label: "Light" },
+  { name: "dark", label: "Dark" },
+  { name: "ocean", label: "Ocean" },
+  { name: "sunset", label: "Sunset" },
+  { name: "forest", label: "Forest" },
+  { name: "high-contrast", label: "High contrast" },
+] as const;
+
+export function ThemeSwitcher() {
+  const { theme, hasAdaptiveThemes } = useNitroWind();
+  const active = hasAdaptiveThemes ? "system" : theme;
+
+  return (
+    <ScrollView horizontal className="p-4">
+      <View className="flex-row gap-2">
+        {choices.map((item) => (
+          <Pressable
+            key={item.name}
+            className={`items-center rounded-lg px-4 py-3 ${
+              active === item.name ? "bg-indigo-600" : "bg-zinc-200 dark:bg-zinc-800"
+            }`}
+            onPress={() => NitroWind.setTheme(item.name)}
+          >
+            <Text
+              className={`text-xs ${
+                active === item.name ? "text-white" : "text-zinc-900 dark:text-white"
+              }`}
+            >
+              {item.label}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
+    </ScrollView>
+  );
+}
+```
+
+Repo showcase themes (`coffee`, `emerald`, `ocean`) follow the same `setTheme` path: [`packages/nitro-wind/src/showcase.tsx`](https://github.com/Aris-ngoy/NitroWind/blob/main/packages/nitro-wind/src/showcase.tsx).
+
+## Best practices
+
+- Keep variable names identical across every theme so a card cannot go missing a token.
+- Test each extra theme. `dark:` styles do not apply when the name is `ocean`.
+- Prefer CSS variables for surfaces that change on every extra theme. Use `dark:` / `light:` only for the two default schemes.
+- Do not put theme-specific `if (theme === "premium")` branches in components. Switch tokens or prefixes instead.
+
+## Troubleshooting
+
+### Theme name does not change the UI
+
+1. Confirm you called `NitroWind.setTheme("premium")` with the same string you registered.
+2. Confirm `registerThemes()` ran before the first paint.
+3. If you only used `dark:` classes, add `premium:` prefixes or read CSS variables — `dark:` does not match `premium`.
+
+### Variable is undefined
+
+1. The name must start with `--`.
+2. Define it on **every** theme bag, not only the one you are viewing.
+3. `useCSSVariable` must run under `NitroWindProvider`.
+
+### `bg-[var(--color-primary)]` looks wrong
+
+The engine does not resolve `var(...)`. Use `useCSSVariable("--color-primary")` and `style={{ backgroundColor }}`.
+
+<Columns cols={2}>
+  <Card title="Theming basics" icon="sun-moon" href="/guide/theming">
+    Light, dark, system, and `dark:` variants.
+  </Card>
+  <Card title="Styling with className" icon="palette" href="/guide/styling">
+    Supported utilities and hosts.
+  </Card>
+</Columns>

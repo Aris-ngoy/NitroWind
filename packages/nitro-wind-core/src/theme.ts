@@ -436,7 +436,114 @@ export const COLORS: Record<string, ShadeMap | string> = {
 	},
 };
 
+export type ThemeTokenScale = {
+	colors?: Record<string, string>;
+	spacing?: Record<string, number>;
+	radius?: Record<string, number>;
+	fontSize?: Record<string, number>;
+	breakpoints?: Record<string, number>;
+	replaceColors?: boolean;
+	replaceSpacing?: boolean;
+	replaceRadius?: boolean;
+	replaceFontSize?: boolean;
+	replaceBreakpoints?: boolean;
+};
+
+const colorOverlay: Record<string, string> = {};
+const spacingOverlay: Record<string, number> = {};
+const radiusOverlay: Record<string, number> = {};
+const fontSizeOverlay: Record<string, number> = {};
+const breakpointOverlay: Record<string, number> = {};
+
+let replaceColors = false;
+let replaceSpacing = false;
+let replaceRadius = false;
+let replaceFontSize = false;
+let replaceBreakpoints = false;
+
+function assignOverlay<T>(target: Record<string, T>, source: Record<string, T> | undefined, clear: boolean): void {
+	if (clear) {
+		for (const key of Object.keys(target)) delete target[key];
+	}
+	if (!source) return;
+	for (const [key, value] of Object.entries(source)) {
+		target[key] = value;
+	}
+}
+
+export function applyThemeTokens(tokens: ThemeTokenScale): void {
+	if (tokens.replaceColors != null) replaceColors = tokens.replaceColors;
+	if (tokens.replaceSpacing != null) replaceSpacing = tokens.replaceSpacing;
+	if (tokens.replaceRadius != null) replaceRadius = tokens.replaceRadius;
+	if (tokens.replaceFontSize != null) replaceFontSize = tokens.replaceFontSize;
+	if (tokens.replaceBreakpoints != null) replaceBreakpoints = tokens.replaceBreakpoints;
+
+	assignOverlay(colorOverlay, tokens.colors, tokens.replaceColors === true);
+	assignOverlay(spacingOverlay, tokens.spacing, tokens.replaceSpacing === true);
+	assignOverlay(radiusOverlay, tokens.radius, tokens.replaceRadius === true);
+	assignOverlay(fontSizeOverlay, tokens.fontSize, tokens.replaceFontSize === true);
+	assignOverlay(breakpointOverlay, tokens.breakpoints, tokens.replaceBreakpoints === true);
+	notifyThemeTokensChanged();
+}
+
+export function resetThemeTokens(): void {
+	assignOverlay(colorOverlay, undefined, true);
+	assignOverlay(spacingOverlay, undefined, true);
+	assignOverlay(radiusOverlay, undefined, true);
+	assignOverlay(fontSizeOverlay, undefined, true);
+	assignOverlay(breakpointOverlay, undefined, true);
+	replaceColors = false;
+	replaceSpacing = false;
+	replaceRadius = false;
+	replaceFontSize = false;
+	replaceBreakpoints = false;
+	notifyThemeTokensChanged();
+}
+
+type ThemeTokensListener = () => void;
+const themeTokenListeners = new Set<ThemeTokensListener>();
+
+export function onThemeTokensChanged(listener: ThemeTokensListener): () => void {
+	themeTokenListeners.add(listener);
+	return () => {
+		themeTokenListeners.delete(listener);
+	};
+}
+
+function notifyThemeTokensChanged(): void {
+	for (const listener of themeTokenListeners) listener();
+}
+
+function lookupNumber(
+	token: string,
+	overlay: Record<string, number>,
+	defaults: Record<string, number>,
+	replace: boolean,
+): number | undefined {
+	if (token in overlay) return overlay[token];
+	if (replace) return undefined;
+	return defaults[token];
+}
+
+export function resolveSpacing(token: string): number | undefined {
+	return lookupNumber(token, spacingOverlay, SPACING, replaceSpacing);
+}
+
+export function resolveRadius(token: string): number | undefined {
+	return lookupNumber(token, radiusOverlay, RADIUS, replaceRadius);
+}
+
+export function resolveFontSize(token: string): number | undefined {
+	return lookupNumber(token, fontSizeOverlay, FONT_SIZE, replaceFontSize);
+}
+
+export function resolveBreakpoint(token: string): number | undefined {
+	return lookupNumber(token, breakpointOverlay, BREAKPOINTS, replaceBreakpoints);
+}
+
 export function resolveColor(token: string): string | undefined {
+	if (token in colorOverlay) return colorOverlay[token];
+	if (replaceColors) return undefined;
 	if (token in COLORS && typeof COLORS[token] === "string") {
 		return COLORS[token] as string;
 	}

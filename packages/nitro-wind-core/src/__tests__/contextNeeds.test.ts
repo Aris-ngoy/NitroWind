@@ -62,15 +62,10 @@ describe("classNameContextNeeds", () => {
 		expect(classNameIsAotCompilable("duration-300")).toBe(true);
 	});
 
-	test("an unrecognized variant is not AOT-eligible even though it is context-free", () => {
-		// classNameContextNeeds treats "foo" as a no-op variant (parseClassName
-		// skips any token with an unmatched variant), so it is genuinely
-		// context-free. But that inference is a property of the parser's current
-		// skip-on-mismatch behavior, not a general guarantee — classNameIsAotCompilable
-		// additionally requires zero variants of any kind before hoisting, matching
-		// packages/nitro-wind/babel.js's independently-written conservative check
-		// (see the parity test in packages/nitro-wind/src/__tests__/babel.test.ts).
-		expect(classNameIsContextFree("foo:p-4")).toBe(true);
+	test("a custom theme-name variant needs color scheme and is not AOT-eligible", () => {
+		expect(classNameContextNeeds("premium:bg-indigo-950").colorScheme).toBe(true);
+		expect(classNameIsContextFree("premium:bg-indigo-950")).toBe(false);
+		expect(classNameIsAotCompilable("premium:bg-indigo-950")).toBe(false);
 		expect(classNameIsAotCompilable("foo:p-4")).toBe(false);
 	});
 

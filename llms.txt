@@ -1,0 +1,46 @@
+# nitro-wind
+
+> High-performance Tailwind CSS engine for React Native, powered by Nitro Modules. Expo Go uses the JavaScript fallback. A development build or bare React Native app loads the native C++ engine after you rebuild.
+
+## Agent instructions
+
+- Write Tailwind utility `className` strings. Do not add `global.css`, Metro CSS wrappers, or `tailwind.config.js` for native styling.
+- Add `plugins: ["nitro-wind/babel"]` and wrap the app in `NitroWindProvider`.
+- `className` works on `View`, `Text`, `Pressable`, `Image`, `ScrollView`, `TextInput`, `TouchableOpacity`, and `FlatList` imported from `react-native`. Use `styled()` or `withNitroWind()` for every other host.
+- `Uniwind`, `withUniwind`, and `useUniwind` are compatibility aliases. Prefer `NitroWind`, `styled`, and `useNitroWind` in new code.
+- There are no `pt-safe` utilities. Use `styled(SafeAreaView)` or `useSafeAreaInsets()`.
+- Do not invent APIs. Fetch the docs pages below or https://nitro-wind.mintlify.app/llms-full.txt.
+- Install agent skills with `npx skills add Aris-ngoy/NitroWind` or `npx skills add https://nitro-wind.mintlify.app`.
+
+## Install agent skills
+
+- [nitro-wind](https://github.com/Aris-ngoy/NitroWind/tree/main/skills/nitro-wind/SKILL.md): Install, style, theme, and animate with nitro-wind
+- [migrate-to-nitro-wind](https://github.com/Aris-ngoy/NitroWind/tree/main/skills/migrate-to-nitro-wind/SKILL.md): Migrate from NativeWind, Uniwind, Unistyles, or another library
+
+```bash
+npx skills add Aris-ngoy/NitroWind
+npx skills add https://nitro-wind.mintlify.app
+```
+
+## Docs
+
+- [Overview](https://nitro-wind.mintlify.app/): What nitro-wind is
+- [Getting started](https://nitro-wind.mintlify.app/guide/getting-started.md): Install, Babel plugin, Expo and bare RN
+- [Styling with className](https://nitro-wind.mintlify.app/guide/styling.md): Utilities, Babel hosts, styled()
+- [Architecture](https://nitro-wind.mintlify.app/guide/architecture.md): Engine, cache, subscriptions
+- [Theming](https://nitro-wind.mintlify.app/guide/theming.md): light/dark/system, setTheme, transitions
+- [Custom themes](https://nitro-wind.mintlify.app/guide/custom-themes.md): named themes, CSS variables, `premium:` prefixes
+- [Animations](https://nitro-wind.mintlify.app/guide/animations.md): animate-* and uw-/nw- Reanimated tokens
+- [Public API](https://nitro-wind.mintlify.app/api/overview.md): Provider, hooks, engine, CLI
+- [AI agents](https://nitro-wind.mintlify.app/guide/ai.md): llms.txt, skills, MCP
+- [Migrate from NativeWind](https://nitro-wind.mintlify.app/migration/nativewind.md)
+- [Migrate from Uniwind](https://nitro-wind.mintlify.app/migration/uniwind.md)
+- [Migrate from Unistyles](https://nitro-wind.mintlify.app/migration/unistyles.md)
+
+Full documentation dump: https://nitro-wind.mintlify.app/llms-full.txt
+
+## Optional
+
+- [GitHub](https://github.com/Aris-ngoy/NitroWind)
+- [npm](https://www.npmjs.com/package/nitro-wind)
+- [skills.sh](https://skills.sh/Aris-ngoy/NitroWind)

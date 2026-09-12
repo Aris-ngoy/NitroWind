@@ -31,6 +31,7 @@ export interface StyleEngine extends HybridObject<{ ios: "c++"; android: "c++" }
 	compute(className: string, context: StyleContext): StyleResult;
 	computeBatch(classNames: string[], context: StyleContext): StyleResult[];
 	setThemeName(name: string): void;
+	registerThemeTokens(payload: string): void;
 	clearCache(): void;
 	getCacheSize(): number;
 }

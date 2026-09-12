@@ -1,6 +1,7 @@
 import { StyleCache, fastCacheKey } from "./cache";
 import { inflateStyle } from "./inflate";
 import { parseAnimation, parseClassName } from "./parser";
+import { onThemeTokensChanged } from "./theme";
 import { type AnimationMeta, DEFAULT_STYLE_CONTEXT, type StyleContext } from "./types";
 
 export interface StyleResult {
@@ -25,6 +26,12 @@ export class JsStyleEngine {
 	private themeName = "default";
 	private lastKey: string | undefined;
 	private lastResult: StyleResult | undefined;
+
+	constructor() {
+		onThemeTokensChanged(() => {
+			this.resetHotCache();
+		});
+	}
 
 	compute(className: string, context: Partial<StyleContext> = DEFAULT_STYLE_CONTEXT): StyleResult {
 		const resolved =

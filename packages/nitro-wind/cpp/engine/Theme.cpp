@@ -1,6 +1,7 @@
 #include "Theme.hpp"
 
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 
 namespace nitrowind::engine {
@@ -74,7 +75,97 @@ int hexByte(std::string_view pair) {
   return hexNibble(pair[0]) * 16 + hexNibble(pair[1]);
 }
 
+struct ThemeOverlays {
+  SvMap<std::string> colors;
+  SvMap<double> spacing;
+  SvMap<double> radius;
+  SvMap<double> fontSize;
+  SvMap<double> breakpoints;
+  bool replaceColors = false;
+  bool replaceSpacing = false;
+  bool replaceRadius = false;
+  bool replaceFontSize = false;
+  bool replaceBreakpoints = false;
+};
+
+ThemeOverlays& overlays() {
+  static ThemeOverlays state;
+  return state;
+}
+
+template <typename V>
+std::optional<V> lookupNumber(std::string_view token, const SvMap<V>& overlay, const SvMap<V>& defaults, bool replace) {
+  auto oit = overlay.find(token);
+  if (oit != overlay.end()) return oit->second;
+  if (replace) return std::nullopt;
+  auto it = defaults.find(token);
+  if (it == defaults.end()) return std::nullopt;
+  return it->second;
+}
+
+void applyReplaceFlag(std::string_view scale, ThemeOverlays& state) {
+  if (scale == "colors") {
+    state.replaceColors = true;
+    state.colors.clear();
+  } else if (scale == "spacing") {
+    state.replaceSpacing = true;
+    state.spacing.clear();
+  } else if (scale == "radius") {
+    state.replaceRadius = true;
+    state.radius.clear();
+  } else if (scale == "fontSize") {
+    state.replaceFontSize = true;
+    state.fontSize.clear();
+  } else if (scale == "breakpoints") {
+    state.replaceBreakpoints = true;
+    state.breakpoints.clear();
+  }
+}
+
 } // namespace
+
+void resetThemeTokens() {
+  overlays() = ThemeOverlays{};
+}
+
+void registerThemeTokens(std::string_view payload) {
+  auto& state = overlays();
+  std::size_t cursor = 0;
+  while (cursor < payload.size()) {
+    const auto nl = payload.find('\n', cursor);
+    auto raw = payload.substr(cursor, (nl == std::string_view::npos ? payload.size() : nl) - cursor);
+    cursor = nl == std::string_view::npos ? payload.size() : nl + 1;
+    if (!raw.empty() && raw.back() == '\r') raw.remove_suffix(1);
+    if (raw.empty()) continue;
+    if (raw == "RESET") {
+      state = ThemeOverlays{};
+      continue;
+    }
+    const auto firstTab = raw.find('\t');
+    if (firstTab == std::string_view::npos) continue;
+    const auto kind = raw.substr(0, firstTab);
+    const auto rest = raw.substr(firstTab + 1);
+    if (kind == "X") {
+      applyReplaceFlag(rest, state);
+      continue;
+    }
+    const auto secondTab = rest.find('\t');
+    if (secondTab == std::string_view::npos) continue;
+    const auto key = std::string(rest.substr(0, secondTab));
+    const auto value = rest.substr(secondTab + 1);
+    if (kind == "C") {
+      state.colors[key] = std::string(value);
+    } else if (kind == "S") {
+      state.spacing[key] = std::strtod(std::string(value).c_str(), nullptr);
+    } else if (kind == "R") {
+      state.radius[key] = std::strtod(std::string(value).c_str(), nullptr);
+    } else if (kind == "F") {
+      state.fontSize[key] = std::strtod(std::string(value).c_str(), nullptr);
+    } else if (kind == "B") {
+      state.breakpoints[key] = std::strtod(std::string(value).c_str(), nullptr);
+    }
+  }
+}
 
 const SvMap<double>& spacingScale() {
   static const SvMap<double> scale = {
@@ -144,10 +235,34 @@ const SvMap<double>& durationScale() {
 }
 
 std::optional<std::string_view> resolveColor(std::string_view token) {
+  const auto& state = overlays();
+  auto oit = state.colors.find(token);
+  if (oit != state.colors.end()) return oit->second;
+  if (state.replaceColors) return std::nullopt;
   const auto& colors = colorMap();
   auto it = colors.find(token);
   if (it == colors.end()) return std::nullopt;
   return it->second;
+}
+
+std::optional<double> resolveSpacingToken(std::string_view token) {
+  const auto& state = overlays();
+  return lookupNumber(token, state.spacing, spacingScale(), state.replaceSpacing);
+}
+
+std::optional<double> resolveRadiusToken(std::string_view token) {
+  const auto& state = overlays();
+  return lookupNumber(token, state.radius, radiusScale(), state.replaceRadius);
+}
+
+std::optional<double> resolveFontSizeToken(std::string_view token) {
+  const auto& state = overlays();
+  return lookupNumber(token, state.fontSize, fontSizeScale(), state.replaceFontSize);
+}
+
+std::optional<double> resolveBreakpointToken(std::string_view token) {
+  const auto& state = overlays();
+  return lookupNumber(token, state.breakpoints, breakpointScale(), state.replaceBreakpoints);
 }
 
 std::string applyAlpha(std::string_view color, double alpha) {

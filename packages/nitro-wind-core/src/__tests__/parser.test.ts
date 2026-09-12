@@ -80,6 +80,20 @@ describe("parseClassName", () => {
 		expect(active.color).toBe("#ef4444");
 	});
 
+	test("applies a custom theme name as a variant prefix", () => {
+		const idle = parseClassName("bg-white premium:bg-indigo-950", {
+			...DEFAULT_STYLE_CONTEXT,
+			colorScheme: "light",
+		});
+		expect(idle.backgroundColor).toBe("#ffffff");
+
+		const premium = parseClassName("bg-white premium:bg-indigo-950", {
+			...DEFAULT_STYLE_CONTEXT,
+			colorScheme: "premium",
+		});
+		expect(premium.backgroundColor).toBe("#1e1b4b");
+	});
+
 	test("uses width for breakpoint variants", () => {
 		const compact = parseClassName("p-2 md:p-8", { ...DEFAULT_STYLE_CONTEXT, width: 390 });
 		expect(compact.padding).toBe(8);

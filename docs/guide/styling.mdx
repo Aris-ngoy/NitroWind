@@ -32,7 +32,7 @@ The engine covers the Tailwind families that map cleanly onto React Native style
 
 Variants stack on any utility:
 
-- Theme: `dark:`, `light:`
+- Theme: `dark:`, `light:`, and any name you pass to `setTheme` (`premium:`, `ocean:`)
 - Platform: `ios:`, `android:`, `web:`
 - Breakpoints: `sm:`, `md:`, `lg:`, `xl:`
 - Interaction: `active:`, `hover:`, `focus:`
@@ -45,8 +45,76 @@ Variants stack on any utility:
 Arbitrary values use Tailwind's bracket syntax: `w-[72px]`, `bg-[#4F46E5]`, `top-[12]`.
 
 <Note>
-  You do not write `.card { padding: 16px }` or import a CSS stylesheet. Theme tokens live in `nitro-wind-core` and can be generated with `bunx nitro-wind generate-theme`. See [Theming](/guide/theming).
+  You do not write `.card { padding: 16px }` or import a CSS stylesheet. Add brand utilities (`bg-brand-500`) with [v4 `@theme` or v3 `tailwind.config.js`](/guide/tailwind-config). Built-in scales, named themes, and fonts are covered in [Theming](/guide/theming).
 </Note>
+
+## Not supported
+
+Unknown classes are ignored. They do not throw.
+
+These are the Tailwind utilities and variants that do **not** resolve today. Prefer the workaround when one exists.
+
+### Spacing and layout
+
+| Class | Workaround |
+| --- | --- |
+| `-mt-4`, `-mx-2`, other negative utilities | Arbitrary value: `mt-[-16]`, `mx-[-8]` |
+| `space-x-*`, `space-y-*` | `flex-row gap-*` / `gap-y-*` |
+| `divide-x`, `divide-y`, `divide-*` | A border on each child (`border-t`) |
+| `size-12`, `size-full` | `h-12 w-12`, `h-full w-full` |
+| `order-*` | Reorder the children in JSX |
+| `sticky`, `fixed` | `absolute` / `relative`, or a sticky header on `ScrollView` |
+| `content-evenly` | `content-between` / `content-around` |
+| `w-fit`, `w-min`, `w-max`, `h-fit` | Explicit `w-*` / `h-*` |
+| `max-w-md`, `max-w-prose`, `max-w-screen-*` | `max-w-[448]`, `max-w-full` |
+| `overflow-x-*`, `overflow-y-*` | `overflow-hidden` / `overflow-scroll` |
+| `flex-grow`, `flex-shrink` | `grow`, `shrink` |
+| `flex-2`, `flex-3`, … | `flex-1` or `style={{ flex: 2 }}` |
+
+### Color, shadow, and effects
+
+| Class | Workaround |
+| --- | --- |
+| `bg-gradient-to-*`, `from-*`, `via-*`, `to-*` | `expo-linear-gradient` (or similar) plus `className` on the wrapper |
+| `ring`, `ring-2`, `ring-*` | `border` + `border-*` |
+| `shadow-inner` | `shadow-sm` / `shadow-md` |
+| `blur-*`, `grayscale`, `brightness-*`, `backdrop-*` | A native blur view, or skip |
+
+### Typography
+
+| Class | Workaround |
+| --- | --- |
+| `font-sans`, `font-serif`, `font-mono` | `style={{ fontFamily: "…" }}` |
+| `line-clamp-*`, `text-ellipsis` | `<Text numberOfLines={2} />` (`truncate` only sets `overflow: "hidden"`) |
+| `whitespace-nowrap`, `whitespace-pre` | `numberOfLines={1}` or keep text on one line |
+| `indent-*`, `decoration-2`, `underline-offset-*` | Style prop |
+| `text-balance`, `tabular-nums`, `antialiased` | — |
+
+### Transforms
+
+| Class | Workaround |
+| --- | --- |
+| `-translate-x-4` | `translate-x-[-16]` |
+| `scale-x-*`, `scale-y-*` | `scale-50`, `scale-110` (uniform only) |
+| `skew-*`, `origin-*` | Style `transform` / `transformOrigin` |
+| `aspect-[4/3]` (slash inside brackets) | `aspect-square`, `aspect-video`, or `aspect-[1.5]` |
+
+### Variants
+
+These prefixes never match, so the utility after the colon is dropped.
+
+- Child / sibling: `first:`, `last:`, `odd:`, `even:`, `only:`, `peer`, `peer-*`, `has-*`
+- Form: `placeholder:` — use `placeholderTextColorClassName` on `TextInput`
+- Breakpoints: `max-sm:`, `max-md:`, … (min-width `sm:` / `md:` / `lg:` / `xl:` / `2xl:` work)
+- Orientation: `portrait:`, `landscape:`
+- Pseudo elements: `before:`, `after:`
+- Media: `motion-reduce:`, `print:`, `supports-*`, container `@md:`
+
+### Web-only (no React Native mapping)
+
+`grid`, `grid-cols-*`, `col-span-*`, `float-*`, `clear-*`, `block`, `inline`, `inline-block`, `inline-flex`, `table`, `container`, `columns-*`, `box-border`, `box-content`, `sr-only`, `cursor-*`, `select-*`, `appearance-*`, `scroll-*`, `snap-*`.
+
+Check a string with `bunx nitro-wind validate "p-4 -mt-4 space-x-2"` — it prints the resolved style object. Missing utilities simply do not appear.
 
 ## `className` on React Native components
 
@@ -82,12 +150,82 @@ The Babel plugin remaps those imports to `nitro-wind` and hoists invariant stati
   `className` on `FlatList` / `ScrollView` is the **outer** container (`style`). Padding and gap for the rows belong on `contentContainerClassName` (`contentContainerStyle`).
 </Tip>
 
+## Supported components
+
+These hosts ship with `className` (and extra `*ClassName` props) out of the box. You do not write `styled()` for them.
+
+### Import from `react-native`
+
+The Babel plugin remaps these eight. Keep the usual React Native import.
+
+| Component | Extra `*ClassName` props |
+| --- | --- |
+| `View` | — |
+| `Text` | — |
+| `Pressable` | — |
+| `Image` | `tintColorClassName` |
+| `ScrollView` | `contentContainerClassName`, `endFillColorClassName` |
+| `TextInput` | `placeholderTextColorClassName`, `cursorColorClassName`, `selectionColorClassName`, `selectionHandleColorClassName`, `underlineColorAndroidClassName` |
+| `TouchableOpacity` | — |
+| `FlatList` | `contentContainerClassName`, `columnWrapperClassName`, `ListHeaderComponentClassName`, `ListFooterComponentClassName`, `endFillColorClassName` |
+
+### Import from `nitro-wind`
+
+The rest are pre-styled and exported from the package. Import them from `nitro-wind`, or wrap the React Native host with `styled()` yourself.
+
+| Component | Extra `*ClassName` props |
+| --- | --- |
+| `SafeAreaView` | — |
+| `KeyboardAvoidingView` | — |
+| `ImageBackground` | `imageClassName` |
+| `SectionList` | `contentContainerClassName`, `ListHeaderComponentClassName`, `ListFooterComponentClassName`, `endFillColorClassName` |
+| `VirtualizedList` | `contentContainerClassName`, `ListHeaderComponentClassName`, `ListFooterComponentClassName`, `endFillColorClassName` |
+| `Switch` | `trackColorOnClassName`, `trackColorOffClassName`, `thumbColorClassName`, `ios_backgroundColorClassName` |
+| `Modal` | `backdropColorClassName` |
+| `ActivityIndicator` | `colorClassName` |
+| `Button` | `colorClassName` |
+| `RefreshControl` | `colorsClassName`, `tintColorClassName`, `titleColorClassName`, `progressBackgroundColorClassName` |
+| `TouchableHighlight` | `underlayColorClassName` |
+| `TouchableWithoutFeedback` | — |
+| `TouchableNativeFeedback` | — |
+
+```tsx
+import {
+  ActivityIndicator,
+  Modal,
+  SafeAreaView,
+  SectionList,
+  Switch,
+} from "nitro-wind";
+
+<SafeAreaView className="flex-1 bg-white dark:bg-zinc-950">
+  <SectionList
+    className="flex-1"
+    contentContainerClassName="p-4 gap-2"
+    sections={sections}
+  />
+  <Switch
+    className="self-start"
+    trackColorOnClassName="bg-indigo-600"
+    trackColorOffClassName="bg-zinc-300"
+    thumbColorClassName="bg-white"
+  />
+  <ActivityIndicator className="mt-4" colorClassName="text-indigo-600" />
+  <Modal className="p-4" backdropColorClassName="bg-black/40" />
+</SafeAreaView>
+```
+
+Every name above is also exported as `Styled*` (`StyledView`, `StyledFlatList`, `StyledSafeAreaView`, …) if you want an explicit wrapper name.
+
+Anything else — `BottomSheetView`, Reanimated hosts, your own card — still needs `styled()` (see below).
+
 ## Extra `*ClassName` props
 
 `styled()` also maps any `*ClassName` prop onto the matching style or color prop. Common ones:
 
 ```tsx
-import { FlatList, Image, ScrollView, Switch, TextInput } from "react-native";
+import { FlatList, Image, ScrollView, TextInput } from "react-native";
+import { Switch } from "nitro-wind";
 
 <ScrollView
   className="flex-1"
@@ -131,47 +269,22 @@ import { FlatList, Image, ScrollView, Switch, TextInput } from "react-native";
 
 ## When you need `styled()`
 
-Use `styled()` when the component is **not** in the Babel list above: other React Native hosts (`SafeAreaView`, `SectionList`, `Modal`, `Switch`, …) or any third-party view that accepts a `style` prop.
+Use `styled()` when the component is **not** in the [supported list](#supported-components): a third-party view, or a React Native host you would rather wrap yourself instead of importing from `nitro-wind`.
 
 ```tsx
-import { styled } from "nitro-wind";
-import { SafeAreaView, SectionList } from "react-native";
+import { SafeAreaView, styled } from "nitro-wind";
 import { BottomSheetView } from "@gorhom/bottom-sheet";
 
-const Screen = styled(SafeAreaView);
-const List = styled(SectionList);
 const Sheet = styled(BottomSheetView);
 
 export function Settings() {
   return (
-    <Screen className="flex-1 bg-white dark:bg-zinc-950">
-      <List
-        className="flex-1"
-        contentContainerClassName="p-4"
-        sections={sections}
-      />
+    <SafeAreaView className="flex-1 bg-white dark:bg-zinc-950">
       <Sheet className="rounded-t-3xl bg-zinc-100 p-4 dark:bg-zinc-900" />
-    </Screen>
+    </SafeAreaView>
   );
 }
 ```
-
-You can also import the pre-styled primitives from `nitro-wind` instead of wrapping them yourself:
-
-```tsx
-import { FlatList, SafeAreaView, Text, View } from "nitro-wind";
-```
-
-Those exports include hosts the Babel plugin does not remap, such as `SafeAreaView`, `Modal`, `KeyboardAvoidingView`, `SectionList`, and `Switch`.
-
-<AccordionGroup>
-  <Accordion title="Babel-mapped hosts (className works from react-native)">
-    `View`, `Text`, `Pressable`, `Image`, `ScrollView`, `TextInput`, `TouchableOpacity`, `FlatList`
-  </Accordion>
-  <Accordion title="Import from nitro-wind or wrap with styled()">
-    `SafeAreaView`, `SectionList`, `VirtualizedList`, `Modal`, `KeyboardAvoidingView`, `Switch`, `ActivityIndicator`, `ImageBackground`, `RefreshControl`, plus any third-party component.
-  </Accordion>
-</AccordionGroup>
 
 ## `useStyle()`
 

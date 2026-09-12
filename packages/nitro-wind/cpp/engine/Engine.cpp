@@ -2,6 +2,7 @@
 #include "Hash.hpp"
 #include "Inflate.hpp"
 #include "Parser.hpp"
+#include "Theme.hpp"
 
 namespace nitrowind::engine {
 
@@ -43,6 +44,12 @@ void Engine::setThemeName(const std::string& name) {
   hasLast_ = false;
   lastKey_ = 0;
   lastResult_ = {};
+}
+
+void Engine::registerThemeTokens(const std::string& payload) {
+  ::nitrowind::engine::registerThemeTokens(payload);
+  themeHash_ ^= fnv1a64(payload) | 1;
+  clearCache();
 }
 
 void Engine::clearCache() {

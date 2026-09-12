@@ -1,47 +1,172 @@
 ---
-title: "Theming"
-description: "Light and dark schemes, dark: variants, and native snapshot theme transitions."
-keywords: ["theme", "dark mode", "ThemeTransitionPreset", "setTheme"]
+title: "Theming basics"
+description: "Light, dark, and system themes, dark: variants, and how to switch at runtime."
+keywords: ["theme", "dark mode", "system", "setTheme", "useNitroWind"]
 ---
 
-`NitroWindProvider` selects light or dark. Utility variants `dark:` and `light:` are resolved from that scheme (or the system appearance when no theme is passed).
+`nitro-wind` ships three default themes: `light`, `dark`, and `system`. Use `dark:` / `light:` on the built-in Tailwind scales, then switch with `NitroWind.setTheme`.
+
+For named themes beyond light and dark (`premium`, `ocean`, seasonal modes), see [Custom themes](/guide/custom-themes).
+
+## Default themes
+
+| Theme | Description |
+| --- | --- |
+| `light` | Light scheme. `light:` variants match. |
+| `dark` | Dark scheme. `dark:` variants match. |
+| `system` | Follows the device appearance. Adaptive themes stay on. |
+
+Wrap the app once. Omit `theme` to follow the system.
 
 ```tsx
-<NitroWindProvider theme="dark">
-  <Box className="bg-white dark:bg-slate-950" />
+import { NitroWindProvider } from "nitro-wind";
+import { Text, View } from "react-native";
+
+<NitroWindProvider>
+  <View className="flex-1 bg-white p-4 dark:bg-zinc-950">
+    <Text className="text-zinc-900 dark:text-white">
+      This text adapts to the current theme
+    </Text>
+  </View>
 </NitroWindProvider>
 ```
 
-Call `setTheme("light" | "dark")` from `useNitroWind()` to switch at runtime. The native and JS engines both clear style caches when the theme name changes.
+Pass `theme="dark"` (or `"light"`) to pin the first paint. `NitroWindProvider` is required — unlike Uniwind, nitro-wind does not read a `global.css` file.
+
+## Changing themes
+
+```tsx
+import { NitroWind } from "nitro-wind";
+
+NitroWind.setTheme("dark");
+NitroWind.setTheme("light");
+NitroWind.setTheme("system");
+```
+
+Setting `light` or `dark` turns adaptive themes off. The app stays on that scheme until you call `setTheme` again. Setting `system` turns adaptive themes back on.
+
+`useNitroWind()` (aliased as `useUniwind`) re-renders when the theme changes:
+
+```tsx
+import { NitroWind, useNitroWind } from "nitro-wind";
+import { Pressable, Text, View } from "react-native";
+
+export function ThemeSwitcher() {
+  const { theme, hasAdaptiveThemes } = useNitroWind();
+  const active = hasAdaptiveThemes ? "system" : theme;
+
+  return (
+    <View className="flex-row gap-2 p-4">
+      {(["light", "dark", "system"] as const).map((name) => (
+        <Pressable
+          key={name}
+          className={`rounded-lg px-4 py-3 ${
+            active === name ? "bg-indigo-600" : "bg-zinc-200 dark:bg-zinc-800"
+          }`}
+          onPress={() => NitroWind.setTheme(name)}
+        >
+          <Text
+            className={`text-xs font-semibold ${
+              active === name ? "text-white" : "text-zinc-900 dark:text-white"
+            }`}
+          >
+            {name}
+          </Text>
+        </Pressable>
+      ))}
+    </View>
+  );
+}
+```
+
+Read the same state outside React:
+
+```ts
+NitroWind.currentTheme; // "light" | "dark" | a custom name
+NitroWind.hasAdaptiveThemes; // true while following the system
+NitroWind.getTheme();
+```
+
+## Theme variants in class names
+
+`dark:` and `light:` are evaluated against the active scheme (or the system appearance when the theme is `system`).
+
+```tsx
+<View className="rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-800">
+  <Text className="text-lg font-bold text-zinc-900 dark:text-white">Card title</Text>
+  <Text className="mt-2 text-zinc-600 dark:text-zinc-300">
+    Card content adapts automatically
+  </Text>
+</View>
+```
+
+`ScopedTheme` pins a subtree without changing the rest of the app:
+
+```tsx
+import { ScopedTheme } from "nitro-wind";
+
+<ScopedTheme theme="dark">
+  <View className="rounded-xl bg-white p-4 dark:bg-zinc-900" />
+</ScopedTheme>
+```
+
+## Built-in scales
+
+These resolve with no setup. `font-bold` is **weight**, not a font file.
+
+| Scale | Examples |
+| --- | --- |
+| Colors | `bg-indigo-600`, `text-zinc-900`, `border-slate-200` |
+| Spacing | `p-4` (16), `mx-2`, `gap-3`, `w-12` |
+| Type | `text-sm`, `text-xl`, `font-semibold`, `leading-tight` |
+| Radius | `rounded-lg`, `rounded-2xl`, `rounded-full` |
+| Breakpoints | `sm:`, `md:` (768), `lg:`, `xl:`, `2xl:` |
+
+Dump the default color and spacing tables for reference:
+
+```bash
+bunx nitro-wind generate-theme ./theme
+```
+
+To **add** brand tokens (`bg-brand-500`, `p-18`), use Tailwind v4 `@theme` in `global.css` and/or `tailwind.config.js`. See [Theme config](/guide/tailwind-config).
+
+## Override one view
+
+Arbitrary values skip the scale. Use them for a one-off, not as a design system.
+
+```tsx
+<View className="h-[72] w-[72] rounded-[14] bg-[#4F46E5] p-[20]">
+  <Text className="text-[18] leading-[24] text-white">Custom</Text>
+</View>
+```
+
+Negatives: `mt-[-16]`, not `-mt-4`. `aspect-[1.5]` works; `aspect-[4/3]` does not parse.
+
+## Fonts
+
+Install the typeface, then set `fontFamily`. Keep size and weight on `className`. `font-sans` / `font-serif` / `font-mono` are not utilities.
+
+```tsx
+import { useFonts, Inter_700Bold } from "@expo-google-fonts/inter";
+import { Text } from "react-native";
+
+export function Title({ children }: { children: string }) {
+  const [loaded] = useFonts({ Inter_700Bold });
+  if (!loaded) return null;
+  return (
+    <Text className="text-2xl text-zinc-900 dark:text-white" style={{ fontFamily: "Inter_700Bold" }}>
+      {children}
+    </Text>
+  );
+}
+```
 
 ## Theme transitions
 
-On a native iOS or Android build, `setTheme` can run a snapshot overlay (fade, slide, circle, blur). Expo Go falls back to the JS overlay.
+On a native iOS or Android build, `setTheme` can run a snapshot overlay. Expo Go falls back to the JS overlay.
 
 ```tsx
-import { NitroWind, ThemeTransitionPreset, useNitroWind } from "nitro-wind";
-import { Pressable, Text } from "react-native";
-
-export function ThemeToggle() {
-  const { theme, setTheme } = useNitroWind();
-
-  return (
-    <Pressable
-      className="rounded-full bg-zinc-200 px-4 py-2 dark:bg-zinc-800"
-      onPress={() =>
-        setTheme(theme === "dark" ? "light" : "dark", {
-          preset: ThemeTransitionPreset.CircleCenter,
-          duration: 400,
-        })
-      }
-    >
-      <Text className="text-zinc-900 dark:text-white">Theme: {theme}</Text>
-    </Pressable>
-  );
-}
-
-// Or without the hook:
-NitroWind.setTheme("dark", { preset: ThemeTransitionPreset.Fade });
+NitroWind.setTheme("dark", { preset: ThemeTransitionPreset.CircleCenter, duration: 400 });
 ```
 
 <AccordionGroup>
@@ -49,3 +174,18 @@ NitroWind.setTheme("dark", { preset: ThemeTransitionPreset.Fade });
     `None`, `Fade`, `SlideRightToLeft`, `SlideLeftToRight`, `CircleTopRight`, `CircleTopLeft`, `CircleBottomRight`, `CircleBottomLeft`, `CircleCenter`, `Blur`, `BlurRightToLeft`, `BlurLeftToRight`, `CircleFromOrigin`, `SlideFromOrigin`, `BlurFromOrigin`.
   </Accordion>
 </AccordionGroup>
+
+## Best practices
+
+- Test every screen in both `light` and `dark`.
+- Keep component logic theme-agnostic. Put scheme differences in `dark:` / `light:` or in CSS variables.
+- Use built-in scales for layout. Put brand tokens in `tailwind.config.js`. Reserve arbitrary values and CSS variables for one-offs.
+
+<Columns cols={2}>
+  <Card title="Theme config" icon="settings-2" href="/guide/tailwind-config">
+    Add `bg-brand-500` with v4 `@theme` or v3 `tailwind.config.js`.
+  </Card>
+  <Card title="Styling with className" icon="palette" href="/guide/styling">
+    Supported hosts, utilities, and classes that do not resolve.
+  </Card>
+</Columns>

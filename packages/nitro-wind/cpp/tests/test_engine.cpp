@@ -1,6 +1,7 @@
 #include "engine/Engine.hpp"
 #include "engine/Hash.hpp"
 #include "engine/Parser.hpp"
+#include "engine/Theme.hpp"
 #include "engine/Tokenizer.hpp"
 #include "fabric/NitroWindFabricRegistry.hpp"
 
@@ -175,6 +176,20 @@ int main() {
   flushed = registry.flush(darkContext);
   expectEqual(flushed, static_cast<std::size_t>(2), "flush updates only the 2 dirty nodes");
   expectEqual(registry.getDirtyCount(), static_cast<std::size_t>(0), "all nodes clean after theme commit");
+
+  resetThemeTokens();
+  Engine customTheme;
+  customTheme.registerThemeTokens("RESET\nC\tbrand-500\t#4F46E5\nS\t18\t72\nR\t4xl\t32\nF\txxs\t10\nB\txs\t400\n");
+  const auto custom = customTheme.compute("bg-brand-500 p-18 rounded-4xl text-xxs", context);
+  expectEqual(asString(custom, "backgroundColor"), std::string("#4F46E5"), "tailwind.config color");
+  expectEqual(asNumber(custom, "padding"), 72.0, "tailwind.config spacing");
+  expectEqual(asNumber(custom, "borderRadius"), 32.0, "tailwind.config radius");
+  expectEqual(asNumber(custom, "fontSize"), 10.0, "tailwind.config fontSize");
+  EngineContext xsContext = context;
+  xsContext.width = 420;
+  const auto xs = customTheme.compute("xs:p-4", xsContext);
+  expectEqual(asNumber(xs, "padding"), 16.0, "tailwind.config screen");
+  resetThemeTokens();
 
   // Unlink node
   registry.unlink(102);

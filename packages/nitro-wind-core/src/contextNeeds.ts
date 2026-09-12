@@ -1,4 +1,4 @@
-import { BREAKPOINTS } from "./theme";
+import { onThemeTokensChanged, resolveBreakpoint } from "./theme";
 import { tokenize } from "./tokenizer";
 
 export interface ClassNameContextNeeds {
@@ -27,6 +27,10 @@ const NONE: ClassNameContextNeeds = Object.freeze({
 });
 
 const cache = new Map<string, ClassNameContextNeeds>();
+
+onThemeTokensChanged(() => {
+	cache.clear();
+});
 
 function needsEnv(needs: ClassNameContextNeeds): boolean {
 	return (
@@ -128,7 +132,8 @@ export function classNameContextNeeds(className: string): ClassNameContextNeeds 
 					needs.group = true;
 					break;
 				default:
-					if (variant in BREAKPOINTS) needs.layout = true;
+					if (resolveBreakpoint(variant) != null) needs.layout = true;
+					else needs.colorScheme = true;
 			}
 		}
 	}
@@ -146,19 +151,13 @@ export function classNameIsContextFree(className: string): boolean {
  * Whether it is safe to precompute this className's style at build time and
  * reuse the result for the process lifetime, on every platform, forever.
  *
- * Context-free is necessary but not sufficient: a className with a variant
- * `classNameContextNeeds` doesn't recognize (a typo, or a future utility) reads
- * as context-free here because `parseClassName` skips any token with an
- * unmatched variant — but that is a coincidental property of the parser's
- * current skip-on-mismatch behavior, not a general guarantee. Baking that
- * inference permanently into hoisted build output would go silently stale if
- * the parser ever changed. So this additionally requires zero variants of any
- * kind, matching `packages/nitro-wind/babel.js`'s independently-written but
- * intentionally identical conservative check — the two cannot literally share
- * code (babel.js runs as plain CommonJS with no build step of its own and
- * cannot `require` this package's TypeScript source), so agreement between
- * them is enforced by the parity test in
- * `packages/nitro-wind/src/__tests__/babel.test.ts` instead.
+ * Context-free is necessary but not sufficient. Unknown prefixes are treated
+ * as custom theme names (`premium:`, `ocean:`) and need color scheme. This
+ * still requires zero variants of any kind before hoisting, matching
+ * `packages/nitro-wind/babel.js`'s independently-written conservative check.
+ * The two cannot share code (babel.js is plain CommonJS), so agreement is
+ * enforced by the parity test in
+ * `packages/nitro-wind/src/__tests__/babel.test.ts`.
  */
 export function classNameIsAotCompilable(className: string): boolean {
 	if (!className || !classNameIsContextFree(className)) return false;

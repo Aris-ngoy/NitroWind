@@ -1,26 +1,51 @@
 ---
 title: "Migrate from NativeWind"
-description: "Swap NativeWindProvider and cssInterop for nitro-wind styled() and the Babel plugin."
+description: "Remove NativeWind, cssInterop, and the Metro CSS pipeline. Keep Tailwind className on nitro-wind."
 keywords: ["nativewind", "migration", "cssInterop"]
 ---
 
-<Steps>
-  <Step title="Install">
-    Install `nitro-wind` and `react-native-nitro-modules`.
-  </Step>
-  <Step title="Replace the provider">
-    Replace `NativeWindProvider` with `NitroWindProvider`.
-  </Step>
-  <Step title="Keep className">
-    Enable the Babel automapping plugin so `View`, `Text`, `FlatList`, and the other mapped hosts accept `className` from `react-native`:
+NativeWind compiles CSS through Metro. nitro-wind resolves class strings in JS or C++. Most layout, color, and typography utilities stay the same.
 
-    ```js
-    plugins: ["nitro-wind/babel"]
+<Prompt description="Migrate this React Native app from NativeWind to nitro-wind." actions={["copy", "cursor"]}>
+Install the nitro-wind agent skills, then migrate this project from NativeWind to nitro-wind.
+
+npx skills add Aris-ngoy/NitroWind
+
+Follow the migrate-to-nitro-wind skill. Remove nativewind and react-native-css-interop, add nitro-wind and react-native-nitro-modules, swap the Babel plugin, delete withNativeWind from Metro, replace cssInterop with styled(), and replace NativeWindProvider with NitroWindProvider. Do not add global.css or a Metro CSS wrapper.
+</Prompt>
+
+<Steps>
+  <Step title="Replace the packages">
+    ```bash
+    npm uninstall nativewind react-native-css-interop
+    npx expo install nitro-wind react-native-nitro-modules
     ```
 
-    Use `styled()` only for hosts the plugin does not remap, or for third-party components. See [Styling with className](/guide/styling).
+    Search for leftover `react-native-css-interop` imports. That package is the most common miss.
   </Step>
-  <Step title="Drop cssInterop">
-    Most Tailwind layout, spacing, color, and typography utilities work unchanged. NativeWind-specific `cssInterop` calls are unnecessary — `styled()` maps `className` onto the `style` prop.
+  <Step title="Swap Babel">
+    Remove `'nativewind/babel'` from presets. Add `plugins: ["nitro-wind/babel"]`.
+  </Step>
+  <Step title="Remove the Metro CSS wrapper">
+    Delete `withNativeWind` from `metro.config.js`. nitro-wind does not wrap Metro. Keep `@theme` in `global.css` and/or `theme.extend` in `tailwind.config.js`. Do not import the CSS file on native.
+  </Step>
+  <Step title="Wrap NitroWindProvider">
+    Replace `NativeWindProvider` / `vars()` theme wrappers with `NitroWindProvider`. Keep React Navigation's `ThemeProvider` if you use it.
+
+    ```tsx
+    import { NitroWindProvider } from "nitro-wind";
+    ```
+  </Step>
+  <Step title="Keep className, drop cssInterop">
+    Babel-mapped hosts accept `className` from `react-native`: `View`, `Text`, `Pressable`, `Image`, `ScrollView`, `TextInput`, `TouchableOpacity`, `FlatList`.
+
+    Replace every `cssInterop()` / `remapProps()` with `styled()` or `withNitroWind()` for third-party views. See [Styling with className](/guide/styling).
+  </Step>
+  <Step title="Replace safe-area classes">
+    `pt-safe` / `p-safe` do not exist. Use `styled(SafeAreaView)` from `react-native-safe-area-context` or `useSafeAreaInsets()`.
   </Step>
 </Steps>
+
+Delete `nativewind-env.d.ts`. Rebuild after the first native install (`npx expo run:ios` / `run:android`). Expo Go stays on the JavaScript engine until you use a dev client.
+
+Full agent checklist: the `migrate-to-nitro-wind` skill in [`skills/`](https://github.com/Aris-ngoy/NitroWind/tree/main/skills/migrate-to-nitro-wind).

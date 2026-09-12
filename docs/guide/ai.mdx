@@ -1,0 +1,65 @@
+---
+title: "AI agents"
+description: "Install nitro-wind agent skills, llms.txt, and the docs MCP so coding agents migrate and style correctly."
+keywords: ["ai", "agents", "skills", "llms.txt", "mcp", "cursor", "claude"]
+---
+
+Coding agents should install the nitro-wind skills before they add the library or migrate an existing app.
+
+```bash
+npx skills add Aris-ngoy/NitroWind
+```
+
+The skill names are `nitro-wind` (use the library) and `migrate-to-nitro-wind` (leave NativeWind, Uniwind, or another styling runtime). After this repository is listed on [skills.sh](https://skills.sh), `npx skills find nitro-wind` resolves the same package.
+
+<Tabs>
+  <Tab title="GitHub">
+    ```bash
+    npx skills add Aris-ngoy/NitroWind
+    npx skills add Aris-ngoy/NitroWind --skill nitro-wind
+    npx skills add Aris-ngoy/NitroWind --skill migrate-to-nitro-wind
+    ```
+  </Tab>
+  <Tab title="Docs site">
+    ```bash
+    npx skills add https://nitro-wind.mintlify.app
+    ```
+  </Tab>
+</Tabs>
+
+That installs two skills:
+
+| Skill | Use when |
+| --- | --- |
+| `nitro-wind` | Installing the library, writing `className`, theming, animations, API |
+| `migrate-to-nitro-wind` | Replacing NativeWind, Uniwind, Unistyles, Tamagui, Restyle, StyleSheet, or twrnc |
+
+<Prompt description="Install the nitro-wind agent skills." actions={["copy", "cursor"]}>
+npx skills add Aris-ngoy/NitroWind
+</Prompt>
+
+Source of truth: [`skills/`](https://github.com/Aris-ngoy/NitroWind/tree/main/skills) in the repository.
+
+## `llms.txt`
+
+Agents can index the docs without installing skills:
+
+| File | What it is |
+| --- | --- |
+| [llms.txt](https://nitro-wind.mintlify.app/llms.txt) | Page index plus agent instructions |
+| [llms-full.txt](https://nitro-wind.mintlify.app/llms-full.txt) | Full Markdown dump |
+| [skill.md](https://nitro-wind.mintlify.app/skill.md) | Skills index (`nitro-wind` and `migrate-to-nitro-wind`) |
+
+Every docs page is also available as Markdown by appending `.md` to the URL.
+
+## MCP
+
+This site hosts an MCP server at `https://nitro-wind.mintlify.app/mcp`. Connect it in Cursor, Claude, or Codex so the agent can search these docs instead of guessing APIs.
+
+## Rules for agents
+
+- Customize tokens with Tailwind v4 `@theme` in `global.css` and/or v3 `tailwind.config.js`. Do not import `global.css` in React Native. Do not add Metro CSS wrappers or Tailwind plugins.
+- `className` works on `View`, `Text`, `Pressable`, `Image`, `ScrollView`, `TextInput`, `TouchableOpacity`, and `FlatList` from `react-native` when `nitro-wind/babel` is enabled.
+- Use `styled()` or `withNitroWind()` for every other host.
+- There are no `pt-safe` utilities.
+- `Uniwind` is an alias of `NitroWind` for migrations only.

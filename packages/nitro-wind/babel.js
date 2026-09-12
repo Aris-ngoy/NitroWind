@@ -1,3 +1,6 @@
+const nodePath = require("path");
+const tailwindConfig = require("./tailwind-config.js");
+
 const MAPPED = new Set([
 	"View",
 	"Text",
@@ -225,6 +228,54 @@ function computeStaticImportSource(filename) {
 	return `${"../".repeat(depth)}engine`;
 }
 
+function shouldInjectTailwindConfig(filename) {
+	if (!filename || typeof filename !== "string") return true;
+	if (isNitroWindLibraryFile(filename)) return false;
+	const normalized = filename.replace(/\\/g, "/");
+	return !normalized.includes("/node_modules/");
+}
+
+function injectTailwindConfig(types, programPath, filename, pluginOpts) {
+	if (!shouldInjectTailwindConfig(filename)) return;
+	const explicitConfig = pluginOpts?.config;
+	const explicitCss = pluginOpts?.css;
+	const startDir = filename ? nodePath.dirname(nodePath.resolve(filename)) : process.cwd();
+	let configPath =
+		tailwindConfig.findTailwindConfig(startDir, explicitConfig) ||
+		(!explicitConfig ? tailwindConfig.findTailwindConfig(process.cwd()) : null);
+	const cssPath =
+		tailwindConfig.findCssEntry(startDir, explicitCss) ||
+		(!explicitCss ? tailwindConfig.findCssEntry(process.cwd()) : null);
+	let css = "";
+	if (cssPath) {
+		css = tailwindConfig.readCssWithImports(cssPath);
+		if (!tailwindConfig.cssHasTheme(css)) css = "";
+		else if (!configPath) {
+			const atConfig = tailwindConfig.extractAtConfigPath(css);
+			if (atConfig) {
+				configPath = tailwindConfig.findTailwindConfig(nodePath.dirname(cssPath), atConfig);
+			}
+		}
+	}
+	const config = configPath ? tailwindConfig.loadTailwindConfigModule(configPath) : null;
+	const hasJsTheme = !!(config && tailwindConfig.shouldLoadConfig(config));
+	if (!css && !hasJsTheme) return;
+	const runtimePath = tailwindConfig.writeThemeRuntime({
+		configPath: hasJsTheme ? configPath : null,
+		css,
+		cssPath,
+	});
+	if (!runtimePath) return;
+	const source = runtimePath.split(nodePath.sep).join("/");
+	const already = programPath.node.body.some(
+		(stmt) =>
+			stmt.type === "ImportDeclaration" &&
+			(stmt.source.value === source || stmt.source.value === runtimePath),
+	);
+	if (already) return;
+	programPath.unshiftContainer("body", [types.importDeclaration([], types.stringLiteral(source))]);
+}
+
 function isNitroWindLibraryFile(filename) {
 	if (!filename || typeof filename !== "string") return false;
 	const normalized = filename.replace(/\\/g, "/");
@@ -361,6 +412,10 @@ function nitroWindBabelPlugin(api) {
 				}
 			},
 			Program: {
+				enter(path, state) {
+					const filename = state.filename ?? state.file.opts.filename;
+					injectTailwindConfig(t, path, filename, state.opts);
+				},
 				exit(path) {
 					const entries = this.staticStyles;
 					if (!entries.length || !this.stylesId) return;

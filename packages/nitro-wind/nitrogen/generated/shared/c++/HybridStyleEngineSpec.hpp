@@ -57,6 +57,7 @@ namespace margelo::nitro::nitrowind {
       virtual StyleResult compute(const std::string& className, const StyleContext& context) = 0;
       virtual std::vector<StyleResult> computeBatch(const std::vector<std::string>& classNames, const StyleContext& context) = 0;
       virtual void setThemeName(const std::string& name) = 0;
+      virtual void registerThemeTokens(const std::string& payload) = 0;
       virtual void clearCache() = 0;
       virtual double getCacheSize() = 0;
 

@@ -4,8 +4,51 @@ description: "Convert StyleSheet variants into Tailwind utility strings."
 keywords: ["unistyles", "migration", "stylesheet"]
 ---
 
-Unistyles is a StyleSheet DSL. NitroWind is a Tailwind `className` engine.
+Unistyles is a StyleSheet DSL. nitro-wind is a Tailwind `className` engine. This is a rewrite of style definitions, not a config swap.
 
-- Convert `StyleSheet.create` variants into utility strings (`p-4`, `bg-red-500`, `dark:bg-slate-900`).
-- Use `useStyle` where you previously selected themes with Unistyles breakpoints (`md:`, `lg:`).
-- Keep existing `style` props — `styled()` merges `className` with `style`.
+<Prompt description="Migrate this React Native app from Unistyles to nitro-wind." actions={["copy", "cursor"]}>
+Install the nitro-wind agent skills, then migrate this project from Unistyles to nitro-wind.
+
+npx skills add Aris-ngoy/NitroWind
+
+Follow the migrate-to-nitro-wind skill. Convert StyleSheet.create variants into Tailwind class strings, wrap NitroWindProvider, add nitro-wind/babel, and remove react-native-unistyles when nothing reads it.
+</Prompt>
+
+<Steps>
+  <Step title="Install nitro-wind">
+    Leave Unistyles in place until screens compile on class names.
+
+    ```bash
+    npx expo install nitro-wind react-native-nitro-modules
+    ```
+
+    Add `plugins: ["nitro-wind/babel"]` and wrap `NitroWindProvider`.
+  </Step>
+  <Step title="Convert StyleSheet keys">
+    ```tsx
+    // before
+    <View style={styles.box} />
+
+    // after
+    <View className="bg-white p-4 dark:bg-zinc-950" />
+    ```
+
+    Unistyles variants become extra classes or a small `cn()` helper. Breakpoints become `md:` / `lg:`. Use `useStyle` when you need a style object instead of a wrapper.
+  </Step>
+  <Step title="Keep dynamic style props">
+    `styled()` merges `className` with `style`. Keep inline `style` for animated values, measured layout, and anything that is not a utility.
+  </Step>
+  <Step title="Remove Unistyles">
+    ```bash
+    npm uninstall react-native-unistyles
+    ```
+
+    Delete `UnistylesProvider`, `UnistylesRegistry`, and any Unistyles Babel / Metro plugin.
+  </Step>
+</Steps>
+
+Coming from Tamagui, Restyle, twrnc, or a plain `StyleSheet`? Install the `migrate-to-nitro-wind` skill — it has a dedicated "other libraries" path.
+
+```bash
+npx skills add Aris-ngoy/NitroWind
+```

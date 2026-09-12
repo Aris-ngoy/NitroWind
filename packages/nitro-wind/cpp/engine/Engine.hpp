@@ -13,6 +13,7 @@ public:
   StyleResult compute(const std::string& className, const EngineContext& context);
   std::vector<StyleResult> computeBatch(const std::vector<std::string>& classNames, const EngineContext& context);
   void setThemeName(const std::string& name);
+  void registerThemeTokens(const std::string& payload);
   void clearCache();
   double getCacheSize() const;
 

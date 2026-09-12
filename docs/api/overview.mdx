@@ -22,9 +22,15 @@ See [Styling with className](/guide/styling).
 
 Rewrites these `react-native` imports to `nitro-wind` so `className` works without `styled()`: `View`, `Text`, `Pressable`, `Image`, `ScrollView`, `TextInput`, `TouchableOpacity`, `FlatList`. Invariant static `className` literals are hoisted into `StyleSheet.create`.
 
+If `global.css` contains `@theme` or `tailwind.config.js` is present (or you pass `{ css, config }`), the plugin registers those tokens before hoisted styles resolve. Details: [Theme config](/guide/tailwind-config).
+
 ## Pre-styled components
 
-`View`, `Text`, `Pressable`, `Image`, `ScrollView`, `TextInput`, `TouchableOpacity`, and `FlatList` can be imported from `nitro-wind`. The package also exports the `Styled*` names and additional primitives such as `SafeAreaView`, `Modal`, `SectionList`, and `KeyboardAvoidingView`.
+Import any of these from `nitro-wind` (each also has a `Styled*` alias):
+
+`View`, `Text`, `Pressable`, `Image`, `ImageBackground`, `ScrollView`, `TextInput`, `TouchableOpacity`, `TouchableHighlight`, `TouchableWithoutFeedback`, `TouchableNativeFeedback`, `FlatList`, `SectionList`, `VirtualizedList`, `Switch`, `ActivityIndicator`, `Button`, `RefreshControl`, `KeyboardAvoidingView`, `Modal`, `SafeAreaView`.
+
+The Babel plugin remaps `View`, `Text`, `Pressable`, `Image`, `ScrollView`, `TextInput`, `TouchableOpacity`, and `FlatList` from `react-native`, so those eight do not need a `nitro-wind` import. Full table and extra `*ClassName` props: [Supported components](/guide/styling#supported-components).
 
 ## Engine
 
@@ -44,9 +50,14 @@ import { NitroWind, ThemeTransitionPreset } from "nitro-wind";
 NitroWind.setTheme("dark", { preset: ThemeTransitionPreset.Fade });
 NitroWind.getTheme();
 NitroWind.updateCSSVariables("dark", { "--accent": "#4F46E5" });
+NitroWind.getCSSVariable("--accent");
+NitroWind.loadTailwindCss(`@theme { --color-brand: #4F46E5; }`);
+NitroWind.loadTailwindConfig(require("./tailwind.config.js"));
 ```
 
 `Uniwind` is an alias of `NitroWind` for drop-in migrations.
+
+`useCSSVariable`, `ScopedTheme`, and `ScopedVariables` are documented under [Theming basics](/guide/theming) and [Custom themes](/guide/custom-themes).
 
 ## CLI
 

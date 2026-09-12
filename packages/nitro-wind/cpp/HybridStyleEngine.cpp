@@ -91,6 +91,10 @@ void HybridStyleEngine::setThemeName(const std::string& name) {
   engine_.setThemeName(name);
 }
 
+void HybridStyleEngine::registerThemeTokens(const std::string& payload) {
+  engine_.registerThemeTokens(payload);
+}
+
 void HybridStyleEngine::clearCache() {
   engine_.clearCache();
 }

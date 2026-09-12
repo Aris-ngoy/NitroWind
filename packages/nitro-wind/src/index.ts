@@ -23,6 +23,17 @@ export {
 } from "./engine";
 
 export {
+	applyThemeTokens,
+	loadTailwindConfig,
+	loadTailwindCss,
+	loadTailwindTheme,
+	serializeThemePayload,
+	type TailwindThemeConfig,
+	type TailwindThemeSources,
+	type ThemeTokenScale,
+} from "./themeConfig";
+
+export {
 	NitroWindProvider,
 	useNitroWind,
 	useUniwind,
@@ -158,12 +169,13 @@ export {
 
 export { NitroWindShowcase, type NitroWindShowcaseProps } from "./showcase";
 
-import type { ColorScheme, ThemeTransitionOptions } from "nitro-wind-core";
+import type { ColorScheme, ThemeTransitionOptions, TailwindThemeConfig } from "nitro-wind-core";
 import {
 	getActiveTheme,
 	getHasAdaptiveThemes,
 	setActiveTheme,
 } from "./provider";
+import { applyThemeTokens, loadTailwindConfig, loadTailwindCss, loadTailwindTheme } from "./themeConfig";
 import { getCSSVariable, updateCSSVariables } from "./variables";
 
 export const NitroWind = {
@@ -186,6 +198,14 @@ export const NitroWind = {
 	updateCSSVariables(theme: string, variables: Record<string, string | number>): void {
 		updateCSSVariables(theme, variables);
 	},
+	loadTailwindConfig(config: TailwindThemeConfig): void {
+		loadTailwindConfig(config);
+	},
+	loadTailwindCss(css: string): void {
+		loadTailwindCss(css);
+	},
+	loadTailwindTheme: loadTailwindTheme,
+	applyThemeTokens: applyThemeTokens,
 	getCSSVariable(
 		name: string | string[],
 	): string | number | undefined | (string | number | undefined)[] {

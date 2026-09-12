@@ -1,15 +1,15 @@
 import {
-	BREAKPOINTS,
 	DURATION,
-	FONT_SIZE,
 	FONT_WEIGHT,
 	LINE_HEIGHT,
 	OPACITY,
-	RADIUS,
-	SPACING,
 	Z_INDEX,
 	applyAlpha,
+	resolveBreakpoint,
 	resolveColor,
+	resolveFontSize,
+	resolveRadius,
+	resolveSpacing,
 } from "./theme";
 import { tokenize } from "./tokenizer";
 import type { AnimationMeta, StyleContext, StyleRecord, StyleValue } from "./types";
@@ -144,9 +144,6 @@ const EXACT: Record<string, StyleRecord> = {
 	"border-l": { borderLeftWidth: 1 },
 	"border-x": { borderLeftWidth: 1, borderRightWidth: 1 },
 	"border-y": { borderTopWidth: 1, borderBottomWidth: 1 },
-	rounded: { borderRadius: RADIUS.DEFAULT ?? 4 },
-	"rounded-none": { borderRadius: 0 },
-	"rounded-full": { borderRadius: RADIUS.full ?? 9999 },
 	"pointer-events-none": { pointerEvents: "none" },
 	"pointer-events-auto": { pointerEvents: "auto" },
 	"pointer-events-box-none": { pointerEvents: "box-none" },
@@ -288,7 +285,8 @@ function assign(target: StyleRecord, patch: StyleRecord): void {
 function resolveSpacingValue(value: string): StyleValue | undefined {
 	if (value === "auto") return "auto";
 	if (value in FRACTIONS) return FRACTIONS[value];
-	if (value in SPACING) return SPACING[value];
+	const spacing = resolveSpacing(value);
+	if (spacing != null) return spacing;
 	const arbitrary = parseArbitrary(value);
 	return arbitrary;
 }
@@ -312,6 +310,11 @@ export function resolveUtility(utility: string): StyleRecord | null {
 	const exact = EXACT[base];
 	if (exact) return { ...exact };
 
+	if (base === "rounded") {
+		const size = resolveRadius("DEFAULT");
+		if (size != null) return { borderRadius: size };
+	}
+
 	if (base.startsWith("rounded-")) {
 		const rest = base.slice("rounded-".length);
 		const directional: Record<string, string[]> = {
@@ -328,20 +331,21 @@ export function resolveUtility(utility: string): StyleRecord | null {
 		const maybeDir = parts[0];
 		if (maybeDir && maybeDir in directional && parts.length >= 1) {
 			const sizeKey = parts.length === 1 ? "DEFAULT" : parts.slice(1).join("-");
-			const size = sizeKey === "DEFAULT" ? RADIUS.DEFAULT : RADIUS[sizeKey];
+			const size = resolveRadius(sizeKey);
 			if (size != null) {
 				const out: StyleRecord = {};
 				for (const key of directional[maybeDir] ?? []) out[key] = size;
 				return out;
 			}
 		}
-		const size = RADIUS[rest];
+		const size = resolveRadius(rest);
 		if (size != null) return { borderRadius: size };
 	}
 
 	if (base.startsWith("text-")) {
 		const rest = base.slice(5);
-		if (rest in FONT_SIZE) return { fontSize: FONT_SIZE[rest] as number };
+		const fontSize = resolveFontSize(rest);
+		if (fontSize != null) return { fontSize };
 		const out: StyleRecord = {};
 		if (applyColor(out, "color", rest, alpha)) return out;
 		const arbitrary = parseArbitrary(rest);
@@ -497,10 +501,11 @@ export function variantMatches(variant: string, context: StyleContext): boolean 
 		case "group-hover":
 			return context.groupHover;
 		default:
-			if (variant in BREAKPOINTS) {
-				return context.width >= (BREAKPOINTS[variant] as number);
+			const breakpoint = resolveBreakpoint(variant);
+			if (breakpoint != null) {
+				return context.width >= breakpoint;
 			}
-			return false;
+			return variant === context.colorScheme;
 	}
 }
 

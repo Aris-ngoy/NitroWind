@@ -58,6 +58,16 @@
 			}
 		]
 	},
+	"markdown": {
+		"instructions": [
+			"Write Tailwind utility className strings. Customize tokens with Tailwind v4 @theme in global.css and/or v3 tailwind.config.js (theme.extend). Do not add Metro CSS wrappers or Tailwind plugins. You do not import global.css in React Native.",
+			"Add plugins: [\"nitro-wind/babel\"] and wrap the app in NitroWindProvider.",
+			"className works on View, Text, Pressable, Image, ScrollView, TextInput, TouchableOpacity, and FlatList from react-native. Use styled() or withNitroWind() for every other host.",
+			"Uniwind, withUniwind, and useUniwind are compatibility aliases. Prefer NitroWind, styled, and useNitroWind in new code.",
+			"There are no pt-safe utilities. Use styled(SafeAreaView) or useSafeAreaInsets().",
+			"Do not invent APIs. Fetch /llms.txt or /llms-full.txt. Install agent skills with: npx skills add Aris-ngoy/NitroWind"
+		]
+	},
 	"contextual": {
 		"options": ["copy", "view", "chatgpt", "claude", "cursor", "vscode"],
 		"display": "header"
@@ -70,12 +80,12 @@
 			{
 				"group": "Get started",
 				"icon": "rocket",
-				"pages": ["index", "guide/getting-started"]
+				"pages": ["index", "guide/getting-started", "guide/ai"]
 			},
 			{
 				"group": "Guide",
 				"icon": "book-open",
-				"pages": ["guide/styling", "guide/architecture", "guide/theming", "guide/animations"]
+				"pages": ["guide/styling", "guide/architecture", "guide/theming", "guide/tailwind-config", "guide/custom-themes", "guide/animations"]
 			},
 			{
 				"group": "API",

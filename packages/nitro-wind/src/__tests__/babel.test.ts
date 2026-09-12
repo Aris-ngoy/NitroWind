@@ -367,3 +367,64 @@ export const Row = () => <View className="dark:ios:p-6" />;
 		expect(result?.code).not.toContain("computeStaticStyleForPlatform");
 	});
 });
+
+describe("nitro-wind babel plugin — tailwind.config.js", () => {
+	test("injects a runtime import when a config extends colors", async () => {
+		const fs = await import("node:fs");
+		const os = await import("node:os");
+		const path = await import("node:path");
+		const babel = await import("@babel/core");
+		const jsx = await import("@babel/plugin-syntax-jsx");
+		const dir = fs.mkdtempSync(path.join(os.tmpdir(), "nw-tw-"));
+		const configPath = path.join(dir, "tailwind.config.js");
+		fs.writeFileSync(
+			configPath,
+			`module.exports = { theme: { extend: { colors: { brand: { 500: "#4F46E5" } } } } };\n`,
+		);
+		const result = babel.transformSync(
+			`import { View } from "react-native";
+export const Card = () => <View className="bg-brand-500 p-4" />;
+`,
+			{
+				plugins: [jsx.default, [plugin, { config: configPath }]],
+				filename: path.join(dir, "Card.tsx"),
+				configFile: false,
+				babelrc: false,
+			},
+		);
+		expect(result?.code).toContain("runtime.js");
+		expect(result?.code).toContain("computeStaticStyle");
+		expect(result?.code).toContain('computeStaticStyle("bg-brand-500 p-4")');
+	});
+
+	test("injects a runtime import when global.css has @theme", async () => {
+		const fs = await import("node:fs");
+		const os = await import("node:os");
+		const path = await import("node:path");
+		const babel = await import("@babel/core");
+		const jsx = await import("@babel/plugin-syntax-jsx");
+		const dir = fs.mkdtempSync(path.join(os.tmpdir(), "nw-tw4-"));
+		const cssPath = path.join(dir, "global.css");
+		fs.writeFileSync(
+			cssPath,
+			`@import "tailwindcss";\n@theme { --color-mint-500: #4ade80; }\n`,
+		);
+		const result = babel.transformSync(
+			`import { View } from "react-native";
+export const Card = () => <View className="bg-mint-500 p-4" />;
+`,
+			{
+				plugins: [jsx.default, [plugin, { css: cssPath }]],
+				filename: path.join(dir, "Card.tsx"),
+				configFile: false,
+				babelrc: false,
+			},
+		);
+		expect(result?.code).toContain("runtime.js");
+		const runtimeMatch = result?.code?.match(/import "([^"]+runtime\.js)"/);
+		expect(runtimeMatch?.[1]).toBeTruthy();
+		const runtime = fs.readFileSync(runtimeMatch?.[1] as string, "utf8");
+		expect(runtime).toContain("loadTailwindTheme");
+		expect(runtime).toContain("--color-mint-500");
+	});
+});

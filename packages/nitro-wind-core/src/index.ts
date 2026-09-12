@@ -26,8 +26,31 @@ export {
 	SPACING,
 	Z_INDEX,
 	applyAlpha,
+	applyThemeTokens,
+	onThemeTokensChanged,
+	resetThemeTokens,
+	resolveBreakpoint,
 	resolveColor,
+	resolveFontSize,
+	resolveRadius,
+	resolveSpacing,
+	type ThemeTokenScale,
 } from "./theme";
+export {
+	flattenColors,
+	flattenTailwindTheme,
+	parseLength,
+	type TailwindThemeConfig,
+} from "./tailwindConfig";
+export {
+	extractAtConfigPath,
+	extractLocalCssImports,
+	flattenTailwindCss,
+	flattenTailwindSources,
+	mergeThemeTokens,
+	normalizeThemeColor,
+	type TailwindThemeSources,
+} from "./tailwindCss";
 export {
 	CONTEXT_BITS,
 	DEFAULT_STYLE_CONTEXT,

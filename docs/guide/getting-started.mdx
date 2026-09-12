@@ -36,6 +36,8 @@ module.exports = {
 };
 ```
 
+Optional: add `global.css` with `@theme` (Tailwind v4) and/or `tailwind.config.js` (v3) to extend colors and scales (`bg-brand-500`). The Babel plugin loads them. See [Theme config](/guide/tailwind-config).
+
 Then wrap the app in `NitroWindProvider`. Expo Go uses the JavaScript engine automatically. A development build or bare React Native app loads the native C++ engine (and native theme transitions) after you rebuild.
 
 ## Expo
@@ -136,8 +138,18 @@ import { SafeAreaView } from "react-native";
 const Screen = styled(SafeAreaView);
 ```
 
-Full utility list, extra `*ClassName` props, and more examples: [Styling with className](/guide/styling). List enter / exit / layout motion: [Animations](/guide/animations).
+Full utility list, every supported host, extra `*ClassName` props, and more examples: [Styling with className](/guide/styling#supported-components). List enter / exit / layout motion: [Animations](/guide/animations).
 
 <Tip>
   After cloning this monorepo, run `bun run codegen` before a native build so Nitrogen bindings stay in sync.
 </Tip>
+
+## AI agents
+
+Install the agent skills before asking an assistant to add nitro-wind or migrate an existing app:
+
+```bash
+npx skills add Aris-ngoy/NitroWind
+```
+
+That loads `nitro-wind` (install and style) and `migrate-to-nitro-wind` (NativeWind, Uniwind, Unistyles, and other libraries). See [AI agents](/guide/ai).

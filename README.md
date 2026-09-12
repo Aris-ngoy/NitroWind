@@ -25,6 +25,8 @@ module.exports = {
 };
 ```
 
+Optional: add `global.css` with `@theme` (Tailwind v4) and/or `tailwind.config.js` (v3) to extend colors (`bg-brand-500`). The Babel plugin loads them. Do not import the CSS file in React Native.
+
 Then wrap the app in `NitroWindProvider`. Expo Go uses the JavaScript engine automatically. A development build or bare React Native app loads the native C++ engine (and native theme transitions) after you rebuild.
 
 ## Expo
@@ -233,6 +235,22 @@ Published on Mintlify at [nitro-wind.mintlify.app](https://nitro-wind.mintlify.a
 ```bash
 cd docs && npx mint dev
 ```
+
+## AI agents
+
+Install the agent skills so Cursor, Claude Code, Codex, and other agents can add nitro-wind or migrate from NativeWind, Uniwind, Unistyles, and other styling libraries:
+
+```bash
+npx skills add Aris-ngoy/NitroWind
+npx skills add https://nitro-wind.mintlify.app
+```
+
+| Skill | Use when |
+| --- | --- |
+| `nitro-wind` | Install, `className`, theming, animations |
+| `migrate-to-nitro-wind` | Replace NativeWind, Uniwind, Unistyles, or another library |
+
+Agents can also read [`llms.txt`](llms.txt) in this repo or https://nitro-wind.mintlify.app/llms.txt. See the [AI agents](https://nitro-wind.mintlify.app/guide/ai) guide.
 
 ## License
 

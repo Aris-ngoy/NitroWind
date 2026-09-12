@@ -358,9 +358,7 @@ std::optional<StyleValue> spacingValue(std::string_view value) {
   if (value == "2/3") return std::string("66.666667%");
   if (value == "1/4") return std::string("25%");
   if (value == "3/4") return std::string("75%");
-  const auto& scale = spacingScale();
-  auto it = scale.find(value);
-  if (it != scale.end()) return it->second;
+  if (auto spacing = resolveSpacingToken(value)) return *spacing;
   return parseArbitrary(value);
 }
 
@@ -453,15 +451,28 @@ bool variantMatches(std::string_view variant, const EngineContext& context) {
   if (variant == "group-active" || variant == "group-pressed") return context.groupActive;
   if (variant == "group-focus") return context.groupFocus;
   if (variant == "group-hover") return context.groupHover;
-  const auto& breakpoints = breakpointScale();
-  auto it = breakpoints.find(variant);
-  if (it != breakpoints.end()) return context.width >= it->second;
-  return false;
+  if (auto breakpoint = resolveBreakpointToken(variant)) return context.width >= *breakpoint;
+  return variant == context.colorScheme;
 }
 
 bool applyUtility(std::string_view utility, StyleRecord& target) {
   if (utility.empty()) return false;
   const auto [base, alpha] = splitOpacity(utility);
+
+  if (base == "rounded") {
+    if (auto radius = resolveRadiusToken("DEFAULT")) {
+      setNumber(target, "borderRadius", *radius);
+      return true;
+    }
+  }
+
+  if (startsWith(base, "rounded-")) {
+    const auto rest = base.substr(8);
+    if (auto radius = resolveRadiusToken(rest)) {
+      setNumber(target, "borderRadius", *radius);
+      return true;
+    }
+  }
 
   const auto& exact = exactUtilities();
   auto exactIt = exact.find(base);
@@ -470,22 +481,10 @@ bool applyUtility(std::string_view utility, StyleRecord& target) {
     return true;
   }
 
-  if (startsWith(base, "rounded-")) {
-    const auto rest = base.substr(8);
-    const auto& radii = radiusScale();
-    auto it = radii.find(rest);
-    if (it != radii.end()) {
-      setNumber(target, "borderRadius", it->second);
-      return true;
-    }
-  }
-
   if (startsWith(base, "text-")) {
     const auto rest = base.substr(5);
-    const auto& sizes = fontSizeScale();
-    auto sizeIt = sizes.find(rest);
-    if (sizeIt != sizes.end()) {
-      setNumber(target, "fontSize", sizeIt->second);
+    if (auto size = resolveFontSizeToken(rest)) {
+      setNumber(target, "fontSize", *size);
       return true;
     }
     if (applyColor(target, "color", rest, alpha)) return true;
