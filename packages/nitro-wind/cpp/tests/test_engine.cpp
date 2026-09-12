@@ -55,7 +55,10 @@ static std::string asString(const StyleResult& result, const std::string& key) {
 #include "fixtures.generated.hpp"
 
 int main() {
-  expectEqual(fnv1a64(""), 14695981039346656037ull, "fnv1a64 empty string is the offset basis");
+  expectEqual(
+      fnv1a64(""),
+      static_cast<uint64_t>(14695981039346656037ull),
+      "fnv1a64 empty string is the offset basis");
 
   EngineContext context;
 
