@@ -7,7 +7,8 @@ keywords: ["uniwind", "migration"]
 Swap Uniwind's runtime for `nitro-wind`:
 
 - Replace Uniwind providers with `NitroWindProvider`.
-- Point `className` usage at `styled()` components from `nitro-wind`.
+- Keep `className` on Babel-mapped React Native hosts (`View`, `Text`, `FlatList`, …). Use `styled()` for other hosts or third-party components. See [Styling with className](/guide/styling).
+- Entering / exiting / layout tokens (`uw-entering-*`, `uw-layout-*`) keep working. See [Animations](/guide/animations).
 - Theme tokens follow Tailwind defaults (colors, spacing, radii). Custom Uniwind themes can be re-expressed with `dark:` variants or by extending `nitro-wind-core` token tables.
 
 `Uniwind` is exported as an alias of the `NitroWind` singleton, so existing `Uniwind.setTheme(...)` calls can keep compiling while you migrate.

@@ -12,7 +12,7 @@
 bun add nitro-wind react-native-nitro-modules
 ```
 
-Add the Babel plugin so `className` works on React Native `View` / `Text` and static class names can be hoisted:
+Add the Babel plugin so `className` works on React Native hosts (`View`, `Text`, `FlatList`, …) and static class names can be hoisted:
 
 ```js
 // babel.config.js
@@ -51,20 +51,18 @@ module.exports = function (api) {
 ```tsx
 // App.tsx
 import { StatusBar } from "expo-status-bar";
-import { NitroWindProvider, styled } from "nitro-wind";
+import { NitroWindProvider } from "nitro-wind";
 import { Text, View } from "react-native";
-
-const Box = styled(View);
 
 export default function App() {
   return (
     <NitroWindProvider>
       <StatusBar style="auto" />
-      <Box className="flex-1 items-center justify-center bg-white dark:bg-zinc-950">
+      <View className="flex-1 items-center justify-center bg-white dark:bg-zinc-950">
         <Text className="text-xl font-bold text-zinc-900 dark:text-white">
           Hello nitro-wind
         </Text>
-      </Box>
+      </View>
     </NitroWindProvider>
   );
 }
@@ -103,19 +101,17 @@ module.exports = {
 
 ```tsx
 // App.tsx
-import { NitroWindProvider, styled } from "nitro-wind";
+import { NitroWindProvider } from "nitro-wind";
 import { Text, View } from "react-native";
-
-const Box = styled(View);
 
 export default function App() {
   return (
     <NitroWindProvider>
-      <Box className="flex-1 items-center justify-center bg-white dark:bg-zinc-950">
+      <View className="flex-1 items-center justify-center bg-white dark:bg-zinc-950">
         <Text className="text-xl font-bold text-zinc-900 dark:text-white">
           Hello nitro-wind
         </Text>
-      </Box>
+      </View>
     </NitroWindProvider>
   );
 }
@@ -134,27 +130,26 @@ Repo example: [`apps/bare-example`](apps/bare-example).
 
 ## Examples
 
-### `styled()` and `className`
+### `className` vs `styled()`
+
+With the Babel plugin, `View`, `Text`, `Pressable`, `Image`, `ScrollView`, `TextInput`, `TouchableOpacity`, and `FlatList` accept `className` from `react-native` — no wrap.
 
 ```tsx
-import { styled } from "nitro-wind";
-import { View, Text } from "react-native";
+import { FlatList, Text, View } from "react-native";
 
-const Card = styled(View);
-const Title = styled(Text);
-
-export function ProfileCard() {
-  return (
-    <Card className="m-4 rounded-2xl bg-white p-4 dark:bg-zinc-900 ios:shadow-md">
-      <Title className="text-lg font-semibold text-zinc-900 dark:text-white">
-        nitro-wind
-      </Title>
-    </Card>
-  );
-}
+<FlatList
+  className="flex-1 bg-white dark:bg-zinc-950"
+  contentContainerClassName="p-4 gap-2"
+  data={items}
+  renderItem={({ item }) => (
+    <View className="rounded-xl bg-zinc-100 p-3">
+      <Text className="text-zinc-900">{item.title}</Text>
+    </View>
+  )}
+/>
 ```
 
-You can also import pre-styled primitives (`View`, `Text`, `Pressable`, …) from `nitro-wind` instead of wrapping them yourself.
+Use `styled()` for other hosts (`SafeAreaView`, `SectionList`, `Modal`) or third-party components. You can also import pre-styled primitives from `nitro-wind`. See the [styling guide](https://nitro-wind.mintlify.app/guide/styling).
 
 ### `useStyle()`
 

@@ -12,11 +12,13 @@ keywords: ["nativewind", "migration", "cssInterop"]
     Replace `NativeWindProvider` with `NitroWindProvider`.
   </Step>
   <Step title="Keep className">
-    Keep using `className` on `styled()` components, or enable the Babel automapping plugin:
+    Enable the Babel automapping plugin so `View`, `Text`, `FlatList`, and the other mapped hosts accept `className` from `react-native`:
 
     ```js
     plugins: ["nitro-wind/babel"]
     ```
+
+    Use `styled()` only for hosts the plugin does not remap, or for third-party components. See [Styling with className](/guide/styling).
   </Step>
   <Step title="Drop cssInterop">
     Most Tailwind layout, spacing, color, and typography utilities work unchanged. NativeWind-specific `cssInterop` calls are unnecessary — `styled()` maps `className` onto the `style` prop.

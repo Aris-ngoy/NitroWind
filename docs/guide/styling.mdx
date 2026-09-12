@@ -1,0 +1,196 @@
+---
+title: "Styling with className"
+description: "What CSS nitro-wind supports, when className works on React Native hosts, and when you need styled()."
+keywords: ["classname", "styled", "tailwind", "flatlist", "babel", "css"]
+---
+
+`nitro-wind` does not parse CSS files or CSS-in-JS. You write **Tailwind utility classes**. The engine turns that string into a React Native style object.
+
+```text
+"flex-1 items-center bg-white dark:bg-zinc-950"
+  → { flex: 1, alignItems: "center", backgroundColor: "..." }
+```
+
+Unknown utilities are ignored. Validate a string with:
+
+```bash
+bunx nitro-wind validate "p-4 bg-red-500 dark:bg-blue-600"
+```
+
+## Supported utilities
+
+The engine covers the Tailwind families that map cleanly onto React Native styles.
+
+| Family | Examples |
+| --- | --- |
+| Layout | `flex`, `flex-1`, `flex-row`, `items-center`, `justify-between`, `absolute`, `relative`, `overflow-hidden`, `z-10` |
+| Spacing / size | `p-4`, `mx-2`, `gap-3`, `w-full`, `h-screen`, `min-w-0`, `w-1/2`, `w-[72px]` |
+| Color | `bg-white`, `text-zinc-900`, `border-slate-200`, `tint-sky-500`, `bg-red-500/50` |
+| Typography | `text-xl`, `font-bold`, `italic`, `underline`, `text-center`, `uppercase` |
+| Borders / radius / shadow | `border`, `border-2`, `rounded-2xl`, `shadow-md` |
+| Image | `object-cover`, `object-contain` |
+
+Variants stack on any utility:
+
+- Theme: `dark:`, `light:`
+- Platform: `ios:`, `android:`, `web:`
+- Breakpoints: `sm:`, `md:`, `lg:`, `xl:`
+- Interaction: `active:`, `hover:`, `focus:`
+- Group: `group`, `group-active:`, `group-hover:`
+
+```tsx
+<View className="m-4 rounded-2xl bg-white p-4 dark:bg-zinc-900 ios:shadow-md md:p-6" />
+```
+
+Arbitrary values use Tailwind's bracket syntax: `w-[72px]`, `bg-[#4F46E5]`, `top-[12]`.
+
+<Note>
+  You do not write `.card { padding: 16px }` or import a CSS stylesheet. Theme tokens live in `nitro-wind-core` and can be generated with `bunx nitro-wind generate-theme`. See [Theming](/guide/theming).
+</Note>
+
+## `className` on React Native components
+
+With `plugins: ["nitro-wind/babel"]`, these imports from `react-native` accept `className` with **no wrap**:
+
+`View`, `Text`, `Pressable`, `Image`, `ScrollView`, `TextInput`, `TouchableOpacity`, `FlatList`
+
+```tsx
+import { FlatList, Pressable, Text, View } from "react-native";
+
+export function Inbox({ items }: { items: { id: string; title: string }[] }) {
+  return (
+    <FlatList
+      className="flex-1 bg-white dark:bg-zinc-950"
+      contentContainerClassName="p-4 gap-2"
+      data={items}
+      keyExtractor={(item) => item.id}
+      renderItem={({ item }) => (
+        <Pressable className="rounded-xl bg-zinc-100 p-3 active:bg-zinc-200 dark:bg-zinc-900">
+          <Text className="text-base font-semibold text-zinc-900 dark:text-white">
+            {item.title}
+          </Text>
+        </Pressable>
+      )}
+    />
+  );
+}
+```
+
+The Babel plugin remaps those imports to `nitro-wind` and hoists invariant static class names into `StyleSheet.create`. Dynamic or variant-bearing class names stay on the runtime path.
+
+<Tip>
+  `className` on `FlatList` / `ScrollView` is the **outer** container (`style`). Padding and gap for the rows belong on `contentContainerClassName` (`contentContainerStyle`).
+</Tip>
+
+## Extra `*ClassName` props
+
+`styled()` also maps any `*ClassName` prop onto the matching style or color prop. Common ones:
+
+```tsx
+import { FlatList, Image, ScrollView, Switch, TextInput } from "react-native";
+
+<ScrollView
+  className="flex-1"
+  contentContainerClassName="p-4 gap-3"
+/>
+
+<FlatList
+  className="flex-1"
+  contentContainerClassName="p-4"
+  columnWrapperClassName="gap-2"
+/>
+
+<TextInput
+  className="rounded-xl border border-zinc-200 px-3 py-2"
+  placeholderTextColorClassName="text-zinc-400"
+  cursorColorClassName="text-indigo-600"
+/>
+
+<Image
+  source={avatar}
+  className="h-12 w-12 rounded-full"
+  tintColorClassName="tint-indigo-600"
+/>
+
+<Switch
+  className="self-start"
+  trackColorOnClassName="bg-indigo-600"
+  trackColorOffClassName="bg-zinc-300"
+  thumbColorClassName="bg-white"
+/>
+```
+
+| Prop | Becomes |
+| --- | --- |
+| `className` | `style` |
+| `contentContainerClassName` | `contentContainerStyle` |
+| `columnWrapperClassName` | `columnWrapperStyle` |
+| `imageClassName` | `imageStyle` |
+| `placeholderTextColorClassName` | `placeholderTextColor` |
+| `tintColorClassName` | `tintColor` |
+
+## When you need `styled()`
+
+Use `styled()` when the component is **not** in the Babel list above: other React Native hosts (`SafeAreaView`, `SectionList`, `Modal`, `Switch`, …) or any third-party view that accepts a `style` prop.
+
+```tsx
+import { styled } from "nitro-wind";
+import { SafeAreaView, SectionList } from "react-native";
+import { BottomSheetView } from "@gorhom/bottom-sheet";
+
+const Screen = styled(SafeAreaView);
+const List = styled(SectionList);
+const Sheet = styled(BottomSheetView);
+
+export function Settings() {
+  return (
+    <Screen className="flex-1 bg-white dark:bg-zinc-950">
+      <List
+        className="flex-1"
+        contentContainerClassName="p-4"
+        sections={sections}
+      />
+      <Sheet className="rounded-t-3xl bg-zinc-100 p-4 dark:bg-zinc-900" />
+    </Screen>
+  );
+}
+```
+
+You can also import the pre-styled primitives from `nitro-wind` instead of wrapping them yourself:
+
+```tsx
+import { FlatList, SafeAreaView, Text, View } from "nitro-wind";
+```
+
+Those exports include hosts the Babel plugin does not remap, such as `SafeAreaView`, `Modal`, `KeyboardAvoidingView`, `SectionList`, and `Switch`.
+
+<AccordionGroup>
+  <Accordion title="Babel-mapped hosts (className works from react-native)">
+    `View`, `Text`, `Pressable`, `Image`, `ScrollView`, `TextInput`, `TouchableOpacity`, `FlatList`
+  </Accordion>
+  <Accordion title="Import from nitro-wind or wrap with styled()">
+    `SafeAreaView`, `SectionList`, `VirtualizedList`, `Modal`, `KeyboardAvoidingView`, `Switch`, `ActivityIndicator`, `ImageBackground`, `RefreshControl`, plus any third-party component.
+  </Accordion>
+</AccordionGroup>
+
+## `useStyle()`
+
+Resolve a class string yourself when you need the style object, not a wrapper:
+
+```tsx
+import { useStyle } from "nitro-wind";
+import { View, Text } from "react-native";
+
+export function Badge({ label }: { label: string }) {
+  const { style } = useStyle("rounded-full bg-indigo-600 px-3 py-1");
+  return (
+    <View style={style}>
+      <Text className="text-xs font-medium text-white">{label}</Text>
+    </View>
+  );
+}
+```
+
+`useStyle` only subscribes to theme, layout, or interaction when the class name actually uses those variants. Invariant strings (`p-4 bg-red-500`) do not re-render on rotation or theme change.
+
+For entering, exiting, and list layout animations, see [Animations](/guide/animations).

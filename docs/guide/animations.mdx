@@ -1,21 +1,238 @@
 ---
 title: "Animations"
-description: "Parse animate-*, transition-*, duration-*, and ease-* utilities, then run them with Animated or Reanimated."
-keywords: ["animation", "reanimated", "animate-spin", "transition"]
+description: "Tailwind animate-* loops, plus Reanimated entering, exiting, and list layout transitions driven by className."
+keywords: ["animation", "reanimated", "animate-spin", "entering", "layout", "flatlist"]
 ---
 
-Utility classes such as `animate-spin`, `animate-pulse`, `animate-bounce`, `transition-*`, `duration-*`, and `ease-*` are parsed by the engine.
+There are two animation paths. Both are written as class names.
 
-`styled()` uses React Native's `Animated` API so animations work without extra dependencies.
+| Path | Classes | Runtime | Extra install |
+| --- | --- | --- | --- |
+| Looping utilities | `animate-spin`, `animate-pulse`, `animate-bounce`, `animate-ping` | React Native `Animated` | None |
+| Enter / exit / layout | `uw-entering-*`, `uw-exiting-*`, `uw-layout-*` (or `nw-*`) | Reanimated 4 | `react-native-reanimated` |
 
-## Reanimated 4
+`styled()` (and Babel-mapped hosts) read these tokens and attach the matching props. You do not call `FadeIn` or `LinearTransition` yourself unless you want to.
 
-For Reanimated 4, import the translation helpers:
+## Looping utilities
+
+These run with React Native's `Animated` API. No Reanimated install is required.
+
+```tsx
+import { Text, View } from "react-native";
+
+export function Loading() {
+  return (
+    <View className="flex-row items-center gap-2">
+      <View className="h-4 w-4 rounded-full bg-indigo-600 animate-spin" />
+      <Text className="text-zinc-500 animate-pulse">Loading</Text>
+    </View>
+  );
+}
+```
+
+| Class | Effect |
+| --- | --- |
+| `animate-spin` | Continuous rotation |
+| `animate-pulse` | Opacity and slight scale |
+| `animate-bounce` | Vertical bounce |
+| `animate-ping` | Scale out and fade |
+| `animate-none` | Disable a looping animation |
+
+Pair them with `duration-*`, `ease-*`, and `transition-*` the same way you would on the web (`duration-300`, `ease-in-out`, `transition-all`).
+
+## Reanimated entering, exiting, and layout
+
+Install Reanimated when you want mount / unmount / reorder physics. `uw-` (Uniwind) and `nw-` (nitro-wind) prefixes are aliases — they resolve to the same Reanimated presets.
+
+```bash
+npx expo install react-native-reanimated
+```
+
+```tsx
+<View className="rounded-xl bg-indigo-600 p-3 uw-entering-fade-in uw-entering-duration-400 uw-exiting-fade-out uw-layout-linear-transition uw-layout-springify" />
+```
+
+`styled()` maps those tokens onto Reanimated's `entering`, `exiting`, and `layout` props, then wraps the host with `createAnimatedComponent`.
+
+### Presets
+
+<AccordionGroup>
+  <Accordion title="Entering">
+    `fade-in`, `fade-in-left`, `fade-in-right`, `fade-in-up`, `fade-in-down`, `slide-in-left`, `slide-in-right`, `slide-in-up`, `slide-in-down`, `zoom-in`, `zoom-in-left`, `zoom-in-right`, `bounce-in`, `bounce-in-up`, `flip-in-y-left`, `stretch-in-x`, `roll-in-left`, `pinwheel-in`
+  </Accordion>
+  <Accordion title="Exiting">
+    `fade-out`, `fade-out-left`, `fade-out-right`, `slide-out-left`, `slide-out-right`, `zoom-out`, `bounce-out`, `flip-out-y-right`, `stretch-out-y`, `roll-out-right`, `pinwheel-out`
+  </Accordion>
+  <Accordion title="Layout">
+    `linear-transition`, `fading-transition`, `jumping-transition`, `curved-transition`, `sequenced-transition`, `entry-exit-transition`
+  </Accordion>
+</AccordionGroup>
+
+Write them as `uw-entering-<preset>` or `nw-entering-<preset>`.
+
+### Modifiers
+
+Scope modifiers to the same axis (`entering`, `exiting`, or `layout`):
+
+```
+uw-entering-fade-in
+uw-entering-duration-300
+uw-entering-delay-150
+uw-entering-ease-out
+uw-layout-linear-transition
+uw-layout-springify
+uw-layout-damping-15
+uw-layout-stiffness-120
+```
+
+| Modifier | Example |
+| --- | --- |
+| Duration | `uw-entering-duration-300` |
+| Delay | `uw-entering-delay-150` |
+| Easing | `uw-entering-ease-out` (`linear`, `in`, `out`, `in-out`, `bounce`) |
+| Spring | `uw-layout-springify` plus optional `damping-*`, `stiffness-*`, `mass-*` |
+
+If Reanimated is not installed, the tokens are ignored and the view still renders.
+
+## List animation example
+
+This is the pattern used in the showcase: each row carries entering, exiting, and layout classes. Adding, removing, or reordering items animates automatically because every row keeps a stable `key`.
+
+```tsx
+import { useState } from "react";
+import { Pressable, Text, View } from "react-native";
+
+type Card = {
+  id: string;
+  title: string;
+  color: string;
+  motion: string;
+};
+
+const MOTION = {
+  fade: "uw-entering-fade-in uw-entering-duration-400 uw-exiting-fade-out uw-layout-linear-transition uw-layout-springify",
+  slide: "uw-entering-slide-in-right uw-entering-duration-400 uw-exiting-fade-out uw-layout-linear-transition uw-layout-springify",
+  zoom: "uw-entering-zoom-in uw-entering-duration-400 uw-exiting-fade-out uw-layout-linear-transition uw-layout-springify",
+  bounce: "nw-entering-bounce-in nw-entering-duration-500 nw-exiting-fade-out nw-layout-linear-transition nw-layout-springify",
+};
+
+const INITIAL: Card[] = [
+  { id: "1", title: "Fade in", color: "bg-indigo-600", motion: MOTION.fade },
+  { id: "2", title: "Slide in", color: "bg-sky-600", motion: MOTION.slide },
+  { id: "3", title: "Zoom in", color: "bg-emerald-600", motion: MOTION.zoom },
+];
+
+let nextId = 4;
+
+export function AnimatedInbox() {
+  const [cards, setCards] = useState(INITIAL);
+
+  const addCard = () => {
+    const palettes = [
+      { title: `Slide #${nextId}`, color: "bg-fuchsia-600", motion: MOTION.slide },
+      { title: `Zoom #${nextId}`, color: "bg-cyan-600", motion: MOTION.zoom },
+      { title: `Fade #${nextId}`, color: "bg-rose-600", motion: MOTION.fade },
+    ];
+    const template = palettes[(nextId - 4) % palettes.length]!;
+    setCards((prev) => [...prev, { id: String(nextId++), ...template }]);
+  };
+
+  return (
+    <View className="gap-3">
+      <View className="flex-row gap-2">
+        <Pressable
+          className="flex-1 items-center rounded-xl bg-sky-500 py-2 active:bg-sky-600"
+          onPress={addCard}
+        >
+          <Text className="text-xs font-bold text-white">Add card</Text>
+        </Pressable>
+        <Pressable
+          className="flex-1 items-center rounded-xl bg-zinc-700 py-2 active:bg-zinc-600"
+          onPress={() => setCards((prev) => [...prev].sort(() => Math.random() - 0.5))}
+        >
+          <Text className="text-xs font-bold text-white">Reorder</Text>
+        </Pressable>
+      </View>
+
+      {cards.map((card) => (
+        <View
+          key={card.id}
+          className={`flex-row items-center justify-between rounded-xl p-3 ${card.color} ${card.motion}`}
+        >
+          <Text className="text-sm font-bold text-white">{card.title}</Text>
+          <Pressable
+            className="rounded-lg bg-black/20 px-2 py-1 active:bg-black/40"
+            onPress={() => setCards((prev) => prev.filter((item) => item.id !== card.id))}
+          >
+            <Text className="text-xs font-bold text-white">Remove</Text>
+          </Pressable>
+        </View>
+      ))}
+    </View>
+  );
+}
+```
+
+What each token does on a row:
+
+- `uw-entering-fade-in` — plays when the row mounts (Add card)
+- `uw-exiting-fade-out` — plays when the row unmounts (Remove)
+- `uw-layout-linear-transition uw-layout-springify` — other rows slide into the gap on reorder or delete
+
+Keep a **stable `key`**. Changing `key` remounts the row and retriggers entering instead of a layout transition.
+
+## `FlatList` with layout animation
+
+The same classes work on Babel-mapped `FlatList` rows. Put list chrome on `className` / `contentContainerClassName`, and put motion classes on each item.
+
+```tsx
+import { FlatList, Pressable, Text, View } from "react-native";
+
+const ROW_MOTION =
+  "uw-entering-slide-in-left uw-entering-duration-300 uw-exiting-fade-out uw-layout-linear-transition uw-layout-springify";
+
+export function MailList({
+  items,
+  onRemove,
+}: {
+  items: { id: string; title: string }[];
+  onRemove: (id: string) => void;
+}) {
+  return (
+    <FlatList
+      className="flex-1 bg-white dark:bg-zinc-950"
+      contentContainerClassName="p-4 gap-2"
+      data={items}
+      keyExtractor={(item) => item.id}
+      renderItem={({ item }) => (
+        <View className={`flex-row items-center rounded-xl bg-zinc-100 p-3 dark:bg-zinc-900 ${ROW_MOTION}`}>
+          <Text className="flex-1 font-semibold text-zinc-900 dark:text-white">
+            {item.title}
+          </Text>
+          <Pressable
+            className="rounded-lg bg-zinc-200 px-2 py-1 active:bg-zinc-300 dark:bg-zinc-800"
+            onPress={() => onRemove(item.id)}
+          >
+            <Text className="text-xs text-zinc-700 dark:text-zinc-200">Done</Text>
+          </Pressable>
+        </View>
+      )}
+    />
+  );
+}
+```
+
+## Manual Reanimated helpers
+
+If you need the recipe outside `styled()`, import the translators:
 
 ```ts
 import { translateClassNameToReanimated, getReanimated } from "nitro-wind";
 
 const recipe = translateClassNameToReanimated("animate-spin duration-300");
+const reanimated = getReanimated();
 ```
 
-The recipe maps onto `withRepeat` / `withTiming` / shared values when `react-native-reanimated` is installed (optional peer dependency).
+`translateClassNameToReanimated` maps looping `animate-*` utilities onto `withRepeat` / `withTiming` when Reanimated is present. Prefer class names on `styled()` hosts for entering, exiting, and layout.
+
+Repo example: [`packages/nitro-wind/src/showcase.tsx`](https://github.com/Aris-ngoy/NitroWind/blob/main/packages/nitro-wind/src/showcase.tsx) (`ReanimatedAnimationsDemo`).

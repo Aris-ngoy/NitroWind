@@ -24,7 +24,7 @@ Install the library and Nitro Modules:
   </Tab>
 </Tabs>
 
-Add the Babel plugin so `className` works on React Native `View` / `Text` and static class names can be hoisted:
+Add the Babel plugin so `className` works on React Native hosts (`View`, `Text`, `FlatList`, …) and static class names can be hoisted:
 
 ```js babel.config.js
 module.exports = {
@@ -44,20 +44,18 @@ Works in **Expo Go** (JS fallback) and in a **dev client / prebuild** (native C+
 
 ```tsx App.tsx
 import { StatusBar } from "expo-status-bar";
-import { NitroWindProvider, styled } from "nitro-wind";
+import { NitroWindProvider } from "nitro-wind";
 import { Text, View } from "react-native";
-
-const Box = styled(View);
 
 export default function App() {
   return (
     <NitroWindProvider>
       <StatusBar style="auto" />
-      <Box className="flex-1 items-center justify-center bg-white dark:bg-zinc-950">
+      <View className="flex-1 items-center justify-center bg-white dark:bg-zinc-950">
         <Text className="text-xl font-bold text-zinc-900 dark:text-white">
           Hello nitro-wind
         </Text>
-      </Box>
+      </View>
     </NitroWindProvider>
   );
 }
@@ -83,19 +81,17 @@ Repo example: [`apps/expo-example`](https://github.com/Aris-ngoy/NitroWind/tree/
 Nitro autolinks the native module. After installing, rebuild the app — do not use Fast Refresh alone for the first native install.
 
 ```tsx App.tsx
-import { NitroWindProvider, styled } from "nitro-wind";
+import { NitroWindProvider } from "nitro-wind";
 import { Text, View } from "react-native";
-
-const Box = styled(View);
 
 export default function App() {
   return (
     <NitroWindProvider>
-      <Box className="flex-1 items-center justify-center bg-white dark:bg-zinc-950">
+      <View className="flex-1 items-center justify-center bg-white dark:bg-zinc-950">
         <Text className="text-xl font-bold text-zinc-900 dark:text-white">
           Hello nitro-wind
         </Text>
-      </Box>
+      </View>
     </NitroWindProvider>
   );
 }
@@ -112,43 +108,35 @@ bun run android
 
 Repo example: [`apps/bare-example`](https://github.com/Aris-ngoy/NitroWind/tree/main/apps/bare-example).
 
-## `styled()` and `className`
+## `className` vs `styled()`
+
+With the Babel plugin, `View`, `Text`, `Pressable`, `Image`, `ScrollView`, `TextInput`, `TouchableOpacity`, and `FlatList` accept `className` directly from `react-native`. You do not wrap those hosts.
+
+```tsx
+import { FlatList, Text, View } from "react-native";
+
+<FlatList
+  className="flex-1 bg-white dark:bg-zinc-950"
+  contentContainerClassName="p-4 gap-2"
+  data={items}
+  renderItem={({ item }) => (
+    <View className="rounded-xl bg-zinc-100 p-3">
+      <Text className="text-zinc-900">{item.title}</Text>
+    </View>
+  )}
+/>
+```
+
+Use `styled()` for everything else — `SafeAreaView`, `SectionList`, `Modal`, or third-party components:
 
 ```tsx
 import { styled } from "nitro-wind";
-import { View, Text } from "react-native";
+import { SafeAreaView } from "react-native";
 
-const Card = styled(View);
-const Title = styled(Text);
-
-export function ProfileCard() {
-  return (
-    <Card className="m-4 rounded-2xl bg-white p-4 dark:bg-zinc-900 ios:shadow-md">
-      <Title className="text-lg font-semibold text-zinc-900 dark:text-white">
-        nitro-wind
-      </Title>
-    </Card>
-  );
-}
+const Screen = styled(SafeAreaView);
 ```
 
-You can also import pre-styled primitives (`View`, `Text`, `Pressable`, …) from `nitro-wind` instead of wrapping them yourself.
-
-## `useStyle()`
-
-```tsx
-import { useStyle } from "nitro-wind";
-import { View, Text } from "react-native";
-
-export function Badge() {
-  const { style } = useStyle("rounded-full bg-indigo-600 px-3 py-1");
-  return (
-    <View style={style}>
-      <Text className="text-xs font-medium text-white">Native</Text>
-    </View>
-  );
-}
-```
+Full utility list, extra `*ClassName` props, and more examples: [Styling with className](/guide/styling). List enter / exit / layout motion: [Animations](/guide/animations).
 
 <Tip>
   After cloning this monorepo, run `bun run codegen` before a native build so Nitrogen bindings stay in sync.

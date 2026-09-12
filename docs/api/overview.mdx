@@ -14,15 +14,17 @@ Returns `{ style, animation, native }`. `style` is already inflated (`shadowOffs
 
 ## `styled(Component)`
 
-Adds a `className` prop, merges with `style`, forwards refs, and enables `group-*` variants when the `group` class is present.
+Adds a `className` prop, merges with `style`, forwards refs, and enables `group-*` variants when the `group` class is present. Also maps extra `*ClassName` props (`contentContainerClassName` → `contentContainerStyle`). Use it for hosts the Babel plugin does not remap, or any third-party component that accepts `style`.
+
+See [Styling with className](/guide/styling).
 
 ## Babel plugin (`nitro-wind/babel`)
 
-Rewrites `react-native` `View`/`Text` imports to `nitro-wind` and hoists invariant static `className` literals into `StyleSheet.create`.
+Rewrites these `react-native` imports to `nitro-wind` so `className` works without `styled()`: `View`, `Text`, `Pressable`, `Image`, `ScrollView`, `TextInput`, `TouchableOpacity`, `FlatList`. Invariant static `className` literals are hoisted into `StyleSheet.create`.
 
 ## Pre-styled components
 
-`View`, `Text`, `Pressable`, `Image`, `ScrollView`, `TextInput`, `TouchableOpacity`, and `FlatList` can be imported from `nitro-wind`. The package also exports the `Styled*` names and additional primitives such as `SafeAreaView`, `Modal`, and `KeyboardAvoidingView`.
+`View`, `Text`, `Pressable`, `Image`, `ScrollView`, `TextInput`, `TouchableOpacity`, and `FlatList` can be imported from `nitro-wind`. The package also exports the `Styled*` names and additional primitives such as `SafeAreaView`, `Modal`, `SectionList`, and `KeyboardAvoidingView`.
 
 ## Engine
 
