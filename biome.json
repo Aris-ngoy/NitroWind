@@ -18,6 +18,8 @@
 			"**/ios/Pods/**",
 			"**/android/**",
 			"**/ios/**",
+			"**/vendor/**",
+			"**/.claude/**",
 			"**/*.podspec",
 			"**/Gemfile.lock",
 			"**/post-script.js"

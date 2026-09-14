@@ -1,17 +1,17 @@
 {
-  "expo": {
-    "name": "NitroWind Compare",
-    "slug": "nitrowind-compare",
-    "version": "1.0.0",
-    "orientation": "portrait",
-    "userInterfaceStyle": "dark",
-    "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.harriscreativity.nitrowindcompare"
-    },
-    "android": {
-      "predictiveBackGestureEnabled": false,
-      "package": "com.harriscreativity.nitrowindcompare"
-    }
-  }
+	"expo": {
+		"name": "NitroWind Compare",
+		"slug": "nitrowind-compare",
+		"version": "1.0.0",
+		"orientation": "portrait",
+		"userInterfaceStyle": "dark",
+		"ios": {
+			"supportsTablet": true,
+			"bundleIdentifier": "com.harriscreativity.nitrowindcompare"
+		},
+		"android": {
+			"predictiveBackGestureEnabled": false,
+			"package": "com.harriscreativity.nitrowindcompare"
+		}
+	}
 }

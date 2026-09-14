@@ -1,4 +1,4 @@
-import { parseLength, type TailwindThemeConfig, flattenTailwindTheme } from "./tailwindConfig";
+import { type TailwindThemeConfig, flattenTailwindTheme, parseLength } from "./tailwindConfig";
 import type { ThemeTokenScale } from "./theme";
 
 const COLOR_NAMESPACES = ["color", "background-color", "text-color", "border-color"] as const;
@@ -8,7 +8,10 @@ function stripComments(source: string): string {
 	return source.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/[^\n]*/g, "$1");
 }
 
-function extractBraceBlock(source: string, openIndex: number): { inner: string; end: number } | null {
+function extractBraceBlock(
+	source: string,
+	openIndex: number,
+): { inner: string; end: number } | null {
 	if (source[openIndex] !== "{") return null;
 	let depth = 0;
 	for (let i = openIndex; i < source.length; i++) {
@@ -163,7 +166,8 @@ function parseHsl(value: string): string | undefined {
 
 export function normalizeThemeColor(value: string): string {
 	const trimmed = value.trim().replace(/\s+/g, " ");
-	if (trimmed === "transparent" || trimmed === "inherit" || trimmed === "currentColor") return trimmed;
+	if (trimmed === "transparent" || trimmed === "inherit" || trimmed === "currentColor")
+		return trimmed;
 	if (trimmed.startsWith("#") || trimmed.startsWith("rgb")) return trimmed.replace(/\s+/g, "");
 	return parseOklch(trimmed) ?? parseHsl(trimmed) ?? trimmed;
 }
@@ -289,7 +293,9 @@ export function flattenTailwindCss(source: string): ThemeTokenScale {
 	return tokens;
 }
 
-export function mergeThemeTokens(...scales: Array<ThemeTokenScale | null | undefined>): ThemeTokenScale {
+export function mergeThemeTokens(
+	...scales: Array<ThemeTokenScale | null | undefined>
+): ThemeTokenScale {
 	const out = emptyScale();
 	for (const scale of scales) {
 		if (!scale) continue;

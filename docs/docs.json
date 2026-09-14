@@ -85,7 +85,14 @@
 			{
 				"group": "Guide",
 				"icon": "book-open",
-				"pages": ["guide/styling", "guide/architecture", "guide/theming", "guide/tailwind-config", "guide/custom-themes", "guide/animations"]
+				"pages": [
+					"guide/styling",
+					"guide/architecture",
+					"guide/theming",
+					"guide/tailwind-config",
+					"guide/custom-themes",
+					"guide/animations"
+				]
 			},
 			{
 				"group": "API",

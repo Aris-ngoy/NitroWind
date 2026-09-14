@@ -36,10 +36,7 @@ export interface NativeThemeTransition extends HybridObject<{ ios: "swift"; andr
 		durationMs?: number,
 		origin?: TransitionOrigin,
 	): void;
-	animateTransition(
-		appearance: AppearanceOverride,
-		preAnimationCallback: () => void,
-	): void;
+	animateTransition(appearance: AppearanceOverride, preAnimationCallback: () => void): void;
 	cancelTransition(): void;
 	isAvailable(): boolean;
 }

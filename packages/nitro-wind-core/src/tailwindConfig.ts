@@ -114,7 +114,9 @@ function flattenScreens(input: unknown): Record<string, number> {
 	return out;
 }
 
-export function flattenTailwindTheme(config: TailwindThemeConfig | null | undefined): ThemeTokenScale {
+export function flattenTailwindTheme(
+	config: TailwindThemeConfig | null | undefined,
+): ThemeTokenScale {
 	const theme = config?.theme ?? {};
 	const extend = theme.extend ?? {};
 
@@ -124,19 +126,26 @@ export function flattenTailwindTheme(config: TailwindThemeConfig | null | undefi
 
 	const spacing: Record<string, number> = {};
 	if (theme.spacing != null) Object.assign(spacing, flattenLengths(resolveMaybeFn(theme.spacing)));
-	if (extend.spacing != null) Object.assign(spacing, flattenLengths(resolveMaybeFn(extend.spacing)));
+	if (extend.spacing != null)
+		Object.assign(spacing, flattenLengths(resolveMaybeFn(extend.spacing)));
 
 	const radius: Record<string, number> = {};
-	if (theme.borderRadius != null) Object.assign(radius, flattenLengths(resolveMaybeFn(theme.borderRadius)));
-	if (extend.borderRadius != null) Object.assign(radius, flattenLengths(resolveMaybeFn(extend.borderRadius)));
+	if (theme.borderRadius != null)
+		Object.assign(radius, flattenLengths(resolveMaybeFn(theme.borderRadius)));
+	if (extend.borderRadius != null)
+		Object.assign(radius, flattenLengths(resolveMaybeFn(extend.borderRadius)));
 
 	const fontSize: Record<string, number> = {};
-	if (theme.fontSize != null) Object.assign(fontSize, flattenFontSizes(resolveMaybeFn(theme.fontSize)));
-	if (extend.fontSize != null) Object.assign(fontSize, flattenFontSizes(resolveMaybeFn(extend.fontSize)));
+	if (theme.fontSize != null)
+		Object.assign(fontSize, flattenFontSizes(resolveMaybeFn(theme.fontSize)));
+	if (extend.fontSize != null)
+		Object.assign(fontSize, flattenFontSizes(resolveMaybeFn(extend.fontSize)));
 
 	const breakpoints: Record<string, number> = {};
-	if (theme.screens != null) Object.assign(breakpoints, flattenScreens(resolveMaybeFn(theme.screens)));
-	if (extend.screens != null) Object.assign(breakpoints, flattenScreens(resolveMaybeFn(extend.screens)));
+	if (theme.screens != null)
+		Object.assign(breakpoints, flattenScreens(resolveMaybeFn(theme.screens)));
+	if (extend.screens != null)
+		Object.assign(breakpoints, flattenScreens(resolveMaybeFn(extend.screens)));
 
 	return {
 		colors,

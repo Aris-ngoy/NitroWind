@@ -3,8 +3,8 @@ import {
 	DEFAULT_STYLE_CONTEXT,
 	type PlatformName,
 	type StyleContext,
-	ThemeTransitionPreset,
 	type ThemeTransitionOptions,
+	ThemeTransitionPreset,
 } from "nitro-wind-core";
 import {
 	type ReactNode,
@@ -166,10 +166,7 @@ function useSyncedStore(next: NitroWindContextValue): WindStore {
 	return store;
 }
 
-const fallbackSetTheme = (
-	theme: ColorScheme,
-	options?: ThemeTransitionOptions,
-): void => {
+const fallbackSetTheme = (theme: ColorScheme, options?: ThemeTransitionOptions): void => {
 	const prev = fallbackStore.get();
 	const resolvedTheme = theme === "system" ? readScheme() : theme;
 	if (theme === "system") {
@@ -218,17 +215,15 @@ const fallbackStore: WindStore = createSnapshotStore(
 	makeValue("light", DEFAULT_GROUP, DEFAULT_INTERACTION, fallbackSetTheme),
 );
 
-let activeSetTheme: (theme: ColorScheme, options?: ThemeTransitionOptions) => void = fallbackSetTheme;
+let activeSetTheme: (theme: ColorScheme, options?: ThemeTransitionOptions) => void =
+	fallbackSetTheme;
 let activeGetTheme: () => ColorScheme = () => fallbackStore.get().theme;
 
 export function getActiveTheme(): ColorScheme {
 	return activeGetTheme();
 }
 
-export function setActiveTheme(
-	theme: ColorScheme,
-	options?: ThemeTransitionOptions,
-): void {
+export function setActiveTheme(theme: ColorScheme, options?: ThemeTransitionOptions): void {
 	activeSetTheme(theme, options);
 }
 

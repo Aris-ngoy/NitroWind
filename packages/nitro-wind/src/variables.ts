@@ -75,7 +75,11 @@ function resolveSingleVariable(
 
 	// Fallback across any theme in the store
 	for (const themeKey of Object.keys(cssVariablesStore)) {
-		if (themeKey !== targetTheme && cssVariablesStore[themeKey] && name in cssVariablesStore[themeKey]) {
+		if (
+			themeKey !== targetTheme &&
+			cssVariablesStore[themeKey] &&
+			name in cssVariablesStore[themeKey]
+		) {
 			return cssVariablesStore[themeKey][name];
 		}
 	}
@@ -137,8 +141,16 @@ export function useCSSVariable(
 	};
 
 	// Subscribe to global CSS variable updates and theme store updates
-	useSyncExternalStore(subscribeCSSVariables, () => cssVariablesStore, () => cssVariablesStore);
-	useSyncExternalStore(store.subscribe, () => store.get().theme, () => store.get().theme);
+	useSyncExternalStore(
+		subscribeCSSVariables,
+		() => cssVariablesStore,
+		() => cssVariablesStore,
+	);
+	useSyncExternalStore(
+		store.subscribe,
+		() => store.get().theme,
+		() => store.get().theme,
+	);
 
 	if (Array.isArray(name)) {
 		return name.map((n) => resolveSingleVariable(n, activeTheme, lookupContext));

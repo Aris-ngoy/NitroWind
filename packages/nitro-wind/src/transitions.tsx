@@ -1,11 +1,11 @@
 import {
-	ThemeTransitionPreset,
 	type ThemeTransitionOptions,
+	ThemeTransitionPreset,
 	type TransitionOrigin,
 } from "nitro-wind-core";
 import {
-	type NativeThemeTransition,
 	AppearanceOverride,
+	type NativeThemeTransition,
 } from "./specs/NativeThemeTransition.nitro";
 
 export { AppearanceOverride };
@@ -18,10 +18,10 @@ import {
 	useState,
 } from "react";
 import {
-	Animated as RNAnimated,
 	Dimensions,
-	Easing as RNEasing,
 	Platform,
+	Animated as RNAnimated,
+	Easing as RNEasing,
 	StyleSheet,
 	View,
 } from "react-native";
@@ -51,7 +51,12 @@ export function setGlobalTransitionHandler(
 	globalStartTransition = handler;
 }
 
-let nativeThemeTransition: NativeThemeTransition | null | undefined = undefined;
+export type NativeThemeTransitionApi = Pick<
+	NativeThemeTransition,
+	"prepareTransition" | "animateTransition" | "cancelTransition" | "isAvailable"
+>;
+
+let nativeThemeTransition: NativeThemeTransitionApi | null | undefined = undefined;
 
 function nativeModuleInstalled(): boolean {
 	try {
@@ -62,7 +67,7 @@ function nativeModuleInstalled(): boolean {
 	}
 }
 
-export function getNativeThemeTransition(): NativeThemeTransition | null {
+export function getNativeThemeTransition(): NativeThemeTransitionApi | null {
 	if (nativeThemeTransition !== undefined) return nativeThemeTransition;
 	nativeThemeTransition = null;
 	if (Platform.OS !== "ios" && Platform.OS !== "android") return null;
@@ -72,7 +77,7 @@ export function getNativeThemeTransition(): NativeThemeTransition | null {
 		const { NitroModules } = require("react-native-nitro-modules") as NitroModulesModule;
 		if (!NitroModules.hasHybridObject("NativeThemeTransition")) return null;
 		const obj = NitroModules.createHybridObject<NativeThemeTransition>("NativeThemeTransition");
-		if (obj && obj.isAvailable()) {
+		if (obj?.isAvailable()) {
 			nativeThemeTransition = obj;
 		}
 	} catch {
@@ -82,7 +87,7 @@ export function getNativeThemeTransition(): NativeThemeTransition | null {
 }
 
 export function setNativeThemeTransitionForTesting(
-	instance: NativeThemeTransition | null | undefined,
+	instance: NativeThemeTransitionApi | null | undefined,
 ): void {
 	nativeThemeTransition = instance;
 }
@@ -95,7 +100,12 @@ export function cancelActiveThemeTransition(): void {
 }
 
 function resolveAppearanceOverride(theme: string): AppearanceOverride {
-	if (theme === "dark" || theme.includes("dark") || theme.includes("night") || theme.includes("black")) {
+	if (
+		theme === "dark" ||
+		theme.includes("dark") ||
+		theme.includes("night") ||
+		theme.includes("black")
+	) {
 		return AppearanceOverride.Dark;
 	}
 	if (theme === "light") {
@@ -104,16 +114,9 @@ function resolveAppearanceOverride(theme: string): AppearanceOverride {
 	return AppearanceOverride.Unspecified;
 }
 
-export function requestThemeTransition(
-	transition: Omit<ActiveTransition, "id">,
-): boolean {
+export function requestThemeTransition(transition: Omit<ActiveTransition, "id">): boolean {
 	console.log(
-		"[NitroWind] requestThemeTransition: preset=" +
-			transition.preset +
-			" native=" +
-			Boolean(getNativeThemeTransition()) +
-			" globalHandler=" +
-			Boolean(globalStartTransition),
+		`[NitroWind] requestThemeTransition: preset=${transition.preset} native=${Boolean(getNativeThemeTransition())} globalHandler=${Boolean(globalStartTransition)}`,
 	);
 	if (Platform.OS === "web") {
 		return runWebViewTransition(transition);
@@ -160,16 +163,23 @@ export function resolveThemeBackground(theme: string): string {
 	return "#ffffff";
 }
 
-function runWebViewTransition(
-	transition: Omit<ActiveTransition, "id">,
-): boolean {
-	const doc = typeof globalThis !== "undefined" ? (globalThis as unknown as {
-		document?: {
-			createElement: (tag: string) => { id: string; textContent: string; remove: () => void };
-			head: { appendChild: (node: unknown) => void };
-			startViewTransition?: (callback: () => void) => { finished: Promise<void> };
-		};
-	}).document : undefined;
+function runWebViewTransition(transition: Omit<ActiveTransition, "id">): boolean {
+	const doc =
+		typeof globalThis !== "undefined"
+			? (
+					globalThis as unknown as {
+						document?: {
+							createElement: (tag: string) => {
+								id: string;
+								textContent: string;
+								remove: () => void;
+							};
+							head: { appendChild: (node: unknown) => void };
+							startViewTransition?: (callback: () => void) => { finished: Promise<void> };
+						};
+					}
+				).document
+			: undefined;
 
 	if (!doc) return false;
 
@@ -436,14 +446,6 @@ function getPresetShapeStyle(
 				borderRadius: radius,
 				backgroundColor: color,
 			};
-		case ThemeTransitionPreset.Fade:
-		case ThemeTransitionPreset.SlideRightToLeft:
-		case ThemeTransitionPreset.SlideLeftToRight:
-		case ThemeTransitionPreset.SlideFromOrigin:
-		case ThemeTransitionPreset.Blur:
-		case ThemeTransitionPreset.BlurRightToLeft:
-		case ThemeTransitionPreset.BlurLeftToRight:
-		case ThemeTransitionPreset.BlurFromOrigin:
 		default:
 			return {
 				...(StyleSheet.absoluteFill as unknown as Record<string, unknown>),
@@ -452,21 +454,33 @@ function getPresetShapeStyle(
 	}
 }
 
-interface ReanimatedLike {
-	default?: {
-		View: ComponentType<any>;
-		useSharedValue: (initialValue: number) => { value: number };
-		useAnimatedStyle: (updater: () => any) => any;
-		withTiming: (toValue: number, config?: any, callback?: (finished?: boolean) => void) => number;
-		Easing?: any;
-		runOnJS?: <T extends (...args: any[]) => any>(fn: T) => T;
-	};
-	View?: ComponentType<any>;
-	useSharedValue: (initialValue: number) => { value: number };
-	useAnimatedStyle: (updater: () => any) => any;
-	withTiming: (toValue: number, config?: any, callback?: (finished?: boolean) => void) => number;
-	Easing?: any;
-	runOnJS?: <T extends (...args: any[]) => any>(fn: T) => T;
+type SharedValue = { value: number };
+type AnimatedStyle = Record<string, unknown>;
+type TimingCallback = (finished?: boolean) => void;
+type TimingFn = (
+	toValue: number,
+	config?: { duration?: number; easing?: unknown },
+	callback?: TimingCallback,
+) => number;
+type EasingFunction = (value: number) => number;
+type EasingLike = {
+	out?: (easing: EasingFunction) => EasingFunction;
+	cubic?: EasingFunction;
+};
+type RunOnJS = <T extends (...args: never[]) => unknown>(fn: T) => T;
+
+interface ReanimatedApi {
+	View: ComponentType<Record<string, unknown>>;
+	useSharedValue: (initialValue: number) => SharedValue;
+	useAnimatedStyle: (updater: () => AnimatedStyle) => AnimatedStyle;
+	withTiming: TimingFn;
+	Easing?: EasingLike;
+	runOnJS?: RunOnJS;
+}
+
+interface ReanimatedLike extends Omit<ReanimatedApi, "View"> {
+	default?: ReanimatedApi;
+	View?: ComponentType<Record<string, unknown>>;
 }
 
 export function isReanimatedAvailable(): boolean {
@@ -490,9 +504,10 @@ function ReanimatedOverlayItem({
 	onFinished: () => void;
 }) {
 	const reanimated = getReanimated() as ReanimatedLike;
-	const useSharedValue = (reanimated.useSharedValue ?? reanimated.default?.useSharedValue)!;
-	const useAnimatedStyle = (reanimated.useAnimatedStyle ?? reanimated.default?.useAnimatedStyle)!;
-	const withTiming = (reanimated.withTiming ?? reanimated.default?.withTiming)!;
+	const useSharedValue = reanimated.useSharedValue ?? reanimated.default?.useSharedValue;
+	const useAnimatedStyle = reanimated.useAnimatedStyle ?? reanimated.default?.useAnimatedStyle;
+	const withTiming = reanimated.withTiming ?? reanimated.default?.withTiming;
+	if (!useSharedValue || !useAnimatedStyle || !withTiming) return null;
 	const Easing = reanimated.Easing ?? reanimated.default?.Easing ?? RNEasing;
 	const runOnJS = reanimated.runOnJS ?? reanimated.default?.runOnJS;
 	const AnimatedView = reanimated.default?.View ?? reanimated.View ?? View;
@@ -505,22 +520,20 @@ function ReanimatedOverlayItem({
 	const diameter = radius * 2;
 
 	useEffect(() => {
+		void active.id;
 		progress.value = 0;
 		const duration = active.duration || 400;
-		const easingFn = Easing?.out ? Easing.out(Easing.cubic) : undefined;
-		progress.value = withTiming(
-			1,
-			{ duration, easing: easingFn },
-			(finished) => {
-				if (finished) {
-					if (runOnJS) {
-						runOnJS(onFinished)();
-					} else {
-						onFinished();
-					}
+		const cubic = Easing.cubic;
+		const easingFn = Easing.out && cubic ? Easing.out(cubic) : undefined;
+		progress.value = withTiming(1, { duration, easing: easingFn }, (finished) => {
+			if (finished) {
+				if (runOnJS) {
+					runOnJS(onFinished)();
+				} else {
+					onFinished();
 				}
-			},
-		);
+			}
+		});
 	}, [active.id, active.duration, onFinished, progress, withTiming, Easing, runOnJS]);
 
 	const color =
@@ -575,7 +588,15 @@ function ReanimatedOverlayItem({
 		}
 	});
 
-	const shapeStyle = getPresetShapeStyle(preset, radius, diameter, width, height, color, active.origin);
+	const shapeStyle = getPresetShapeStyle(
+		preset,
+		radius,
+		diameter,
+		width,
+		height,
+		color,
+		active.origin,
+	);
 
 	return <AnimatedView style={[shapeStyle, animatedStyle]} />;
 }
@@ -595,6 +616,7 @@ function RNAnimatedOverlayItem({
 	const diameter = radius * 2;
 
 	useEffect(() => {
+		void active.id;
 		animProgress.setValue(0);
 		const duration = active.duration || 400;
 		const animation = RNAnimated.timing(animProgress, {
@@ -618,9 +640,17 @@ function RNAnimatedOverlayItem({
 			? (active.overlayColor ?? resolveThemeBackground(active.fromTheme))
 			: (active.overlayColor ?? resolveThemeBackground(active.toTheme));
 
-	const shapeStyle = getPresetShapeStyle(active.preset, radius, diameter, width, height, color, active.origin);
+	const shapeStyle = getPresetShapeStyle(
+		active.preset,
+		radius,
+		diameter,
+		width,
+		height,
+		color,
+		active.origin,
+	);
 
-	let dynamicStyle: any = null;
+	let dynamicStyle: object | null = null;
 	switch (active.preset) {
 		case ThemeTransitionPreset.Fade:
 			dynamicStyle = {
